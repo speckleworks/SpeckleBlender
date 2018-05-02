@@ -43,3 +43,6 @@ Usage is fairly simple, but for now is with a couple caveats:
 - **Scale** : Scale factor for incoming data. Outgoing data is scaled by `1 / Scale`.
 - **Update all** : Triggers the `Speckle - Update All` operator. Currently non-functional.
 - **Import stream** : Triggers the `Speckle - Import Stream` operator.
+
+## Notes
+SpeckleBlender is written and sort of maintained by [Tom Svilans](http://tomsvilans.com) ([Github](https://github.com/tsvilans)).
