@@ -12,4 +12,9 @@ class SpeckleSceneSettings(bpy.types.PropertyGroup):
         )
 
     objects = bpy.props.CollectionProperty(type=SpeckleSceneObject)
-    scale = bpy.props.FloatProperty(default=1.0)
+    scale = bpy.props.FloatProperty(default=0.001)
+    user = bpy.props.StringProperty(
+    	name="User",
+    	description="Current user.",
+    	default="Speckle User",
+    	)

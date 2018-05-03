@@ -1,14 +1,19 @@
 import bpy, bmesh
+import base64
 
 from .SpeckleObject import SpeckleMesh
+from .util import SPrint
 
 def SpeckleMesh_to_Lists(o):
     verts = []
     faces = []
     uv = []
 
-    if 'texture_coordinates' in o:
-        s_uvs = o['texture_coordinates']
+    if 'texture_coordinates' in o['properties']:
+        #s_uvs = o['properties']['texture_coordinates']
+        decoded = base64.b64decode(o['properties']['texture_coordinates']).decode("utf-8")
+        s_uvs = decoded.split()   
+          
         for i in range(0, len(s_uvs), 2):
             uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
     
@@ -75,6 +80,16 @@ def SpeckleMesh_to_MeshObject(json, scale=1.0):
     obj = bpy.data.objects.new(json['name'], mesh)
     obj.speckle.object_id = json['_id']
     obj.speckle.enabled = True
+
+        # Add material if there is one
+    if 'material' in json['properties']:
+        material_name = json['properties']['material']['name']
+        SPrint ("Found material: %s" % material_name)
+        mat = bpy.data.materials.get(material_name)
+
+        if mat is None:
+            mat = bpy.data.materials.new(name=material_name)
+        obj.data.materials.append(mat)
 
     return obj
 
