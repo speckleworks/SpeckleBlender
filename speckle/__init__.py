@@ -35,6 +35,9 @@ def register():
     from . properties.object import SpeckleObjectSettings
     bpy.types.Object.speckle = bpy.props.PointerProperty(type=SpeckleObjectSettings)
 
+    from speckle.api.SpeckleClient import SpeckleClient
+    bpy.types.Scene.speckle_client = SpeckleClient()
+
     print("Registered {} with {} modules".format(bl_info["name"], len(modules)))
 
 def unregister():

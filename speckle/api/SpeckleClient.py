@@ -1,13 +1,14 @@
 import requests, json, os
 import struct, base64
 
-from .util import SPrint
+from speckle.util import SPrint
 
 class SpeckleClient(object):
     def __init__(self):
         self.baseUrl = "https://hestia.speckle.works/api/v1"
         self.authToken = ""
         self.useGzip = True
+        self.header = None
 
     '''
     Utility functions
@@ -25,7 +26,13 @@ class SpeckleClient(object):
 
         return False
 
+    def CreateHeader(self):
+        if self.header is None:
+            self.header = {'content-type' : 'application/json', 'Authorization': self.authToken}
+        return self.header
+
     def PrepareResponse(self, header):
+        header = {'content-type' : 'application/json'}
         if self.authToken:
             header['Authorization'] = self.authToken
 
@@ -99,10 +106,7 @@ class SpeckleClient(object):
 
     def GetStreams(self):
         url = self.baseUrl + "/streams"
-
-        headers = {'content-type' : 'application/json'}
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -111,10 +115,7 @@ class SpeckleClient(object):
     def UserClientsGet(self):
         url = self.baseUrl + "/accounts/clients"
 
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -123,10 +124,7 @@ class SpeckleClient(object):
     def UserGetProfile(self):
         url = self.baseUrl + "/accounts/profile"
 
-        headers = {'content-type' : 'application/json'}
-        
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -139,11 +137,7 @@ class SpeckleClient(object):
         assert ("company" in update_dict.keys())
 
         url = self.baseUrl + "/accounts/profile"
-
-        headers = {'content-type' : 'application/json'}
-        
-        self.PrepareResponse(headers)
-        r = requests.put(url, data=json.dumps(login_dict), headers=headers)
+        r = requests.put(url, data=json.dumps(login_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -153,11 +147,7 @@ class SpeckleClient(object):
         assert ("client" in create_dict.keys())
 
         url = self.baseUrl + "/clients"
-
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.post(url, data=json.dumps(create_dict), headers=headers)
+        r = requests.post(url, data=json.dumps(create_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -167,11 +157,7 @@ class SpeckleClient(object):
         if not clientId: raise
 
         url = self.baseUrl + "/clients/%s" % clientId
-
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -183,11 +169,7 @@ class SpeckleClient(object):
         if not clientId: raise
 
         url = self.baseUrl + "/clients/%s" % clientId
-
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.put(url, data=json.dumps(update_dict), headers=headers)
+        r = requests.put(url, data=json.dumps(update_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -197,11 +179,7 @@ class SpeckleClient(object):
         if not clientId: raise
 
         url = self.baseUrl + "/clients/%s" % clientId
-
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.delete(url, headers=headers)
+        r = requests.delete(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -218,11 +196,7 @@ class SpeckleClient(object):
         assert ("name" in create_dict.keys())
 
         url = self.baseUrl + "/streams"
-
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.post(url, data=json.dumps(create_dict), headers=headers)
+        r = requests.post(url, data=json.dumps(create_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -231,25 +205,19 @@ class SpeckleClient(object):
     def StreamDelete(self, streamId):
 
         url = self.baseUrl + "/streams/%s" % streamId
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.delete(url, headers=headers)
+        r = requests.delete(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
         return None 
 
-    def GetStreamObjects(self, query, streamId):
+    def GetStreamObjects(self, streamId, query = None):
         assert streamId is not None
         url = self.baseUrl + "/streams/%s/" % streamId
         if query is not None:
             url = url + "?" + query
 
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -265,11 +233,12 @@ class SpeckleClient(object):
 
         if '_id' in payload.keys():
             del payload['_id']
+        #if 'geometryHash' in payload.keys():
+        #    del payload['geometryHash']
+        if 'hash' in payload.keys():
+            del payload['hash']
 
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        r = requests.post(url, json.dumps(payload), headers=headers)
+        r = requests.post(url, json.dumps(payload), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -280,13 +249,10 @@ class SpeckleClient(object):
         assert streamId is not None
 
         url = self.baseUrl + "/streams/%s" % streamId
-        headers = {'content-type' : 'application/json'}
 
         res = GetStreamObjects(self, None, streamId)
-        print (res)
 
-        self.PrepareResponse(headers)
-        r = requests.put(url, json.dumps({"objects":[objectId]}), headers=headers)
+        r = requests.put(url, json.dumps({"objects":[objectId]}), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -302,16 +268,35 @@ class SpeckleClient(object):
         #SPrint (json.dumps(payload, indent=4, sort_keys=True))
 
         url = self.baseUrl + "/streams/%s" % streamId
-        headers = {'content-type' : 'application/json'}
-
-        self.PrepareResponse(headers)
-        #SPrint(url)
-        r = requests.put(url, json.dumps(payload), headers=headers)
+        r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
         #print(r.text)
 
         if self.check_response_status_code(r):
             return r.json()
         return None
+
+    def UpdateLayers(self, layers, streamId):
+        assert streamId is not None
+        payload = {"layers":[x if isinstance(x, dict) or isinstance(x, str) else x.__dict__ for x in layers ]}
+        #payload = {"objects":[obj]}
+        #SPrint (json.dumps(payload, indent=4, sort_keys=True))
+
+        url = self.baseUrl + "/streams/%s" % streamId
+        r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
+        #print(r.text)
+
+        if self.check_response_status_code(r):
+            return r.json()
+        return None
+
+    def UpdateStream(self, stream, streamId):
+        assert streamId is not None
+        url = self.baseUrl + "/streams/%s" % streamId
+        r = requests.put(url, stream.to_json(), headers=self.CreateHeader())
+
+        if self.check_response_status_code(r):
+            return r.json()
+        return None        
 
     def UpdateObject(self, obj):
         assert obj._id is not None
@@ -323,9 +308,7 @@ class SpeckleClient(object):
         else:
             payload = obj.__dict__
 
-        headers = {'content-type' : 'application/json'}
-        self.PrepareResponse(headers)
-        r = requests.put(url, json.dumps(payload), headers=headers)
+        r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()
@@ -333,11 +316,43 @@ class SpeckleClient(object):
 
     def GetObject(self, objectId):
         assert objectId is not None
-        url = self.baseUrl + "/objects/%s" % objectId
-        headers = {'content-type' : 'application/json'}
 
-        self.PrepareResponse(headers)
-        r = requests.get(url, headers=headers)
+        url = self.baseUrl + "/objects/%s" % objectId
+        r = requests.get(url, headers=self.CreateHeader())
+
+        if self.check_response_status_code(r):
+            return r.json()
+        return None
+
+    def GetLayers(self, streamId):
+        assert streamId is not None
+
+        url = self.baseUrl + "/streams/%s?fields=layers" % streamId
+        print (url)
+        r = requests.get(url, headers=self.CreateHeader())
+
+        if self.check_response_status_code(r):
+            return r.json()
+        return None
+
+    def GetSingleLayer(self, streamId, layerId):
+        assert streamId is not None
+        assert layerId is not None
+
+        url = self.baseUrl + "/streams/%s/layers/%s" % (streamId, layerId)
+        r = requests.get(url, headers=self.CreateHeader())
+
+        if self.check_response_status_code(r):
+            return r.json()
+        return None
+
+    def UpdateSingleLayer(self, body, streamId, layerId):
+        assert streamId is not None
+        assert layerId is not None
+        assert 'layer' in body.keys()
+
+        url = self.baseUrl + "/streams/%s/layers/%s" % (streamId, layerId)
+        r = requests.patch(url, body, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return r.json()

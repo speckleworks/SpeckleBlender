@@ -1,17 +1,34 @@
 import json
 
 class SpeckleObject(object):
-    def __init__(self):
-        self.type = "SpeckleObject"
-        self._id = None
-        self.hash = "1234"
-        self.geometryHash = "5678"
-        self.applicationId = "Blender"
-        self.properties = []
+    def __init__(self, j = None):
+        if j is None:
+            self.type = "SpeckleObject"
+            self._id = None
+            self.hash = "1234"
+            self.geometryHash = "5678"
+            self.applicationId = None
+            self.properties = None
+        else:
+            self.from_json(j)
+
+    def to_json(self):
+        return json.dumps(self.__dict__, sort_keys = True)
+
+    def from_json(self, j):
+        if type(j) is dict:
+            self.__dict__ = j
+        else:
+            self.__dict__ = json.loads(j)
+
+class SpecklePlaceholder(object):
+    def __init__(self, object_id):
+        self._id = object_id
+        self.type = "Placeholder"
 
 class SpeckleMesh(SpeckleObject):
-    def __init__(self):
-        SpeckleObject.__init__( self )
+    def __init__(self, j = None):
+        SpeckleObject.__init__( self, j)
         self.type = "Mesh"
         self.vertices = []
         self.faces = []
@@ -27,9 +44,6 @@ class SpeckleMesh(SpeckleObject):
             elif len(f) == 4:
                 self.faces.append(1)
             self.faces.extend(f)
-
-    def to_json(self):
-        return json.dumps(self.__dict__)
 
 if __name__ == '__main__':
 

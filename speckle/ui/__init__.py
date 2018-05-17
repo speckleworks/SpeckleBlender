@@ -17,21 +17,16 @@ class OBJECT_PT_speckle(bpy.types.Panel):
     def draw_header(self, context):
         self.layout.prop(context.object.speckle, "enabled", text="")
 
-
     def draw(self, context):
         ob = context.object
         layout = self.layout
         layout.active = ob.speckle.enabled
-        row = layout.row()
-        #print (ob.speckle_settings.enabled)
-
-        row.prop(ob.speckle, "send_or_receive", expand=True)
-        row = layout.row()
-        row.prop(ob.speckle, "stream_id", text="Stream ID")
-        row = layout.row()
-        row.prop(ob.speckle, "object_id", text="Object ID")
-        row = layout.row()
-        row.operator("object.speckle_update", text='Update')
+        col = layout.column()
+        col.prop(ob.speckle, "send_or_receive", expand=True)
+        col.prop(ob.speckle, "stream_id", text="Stream ID")
+        col.prop(ob.speckle, "object_id", text="Object ID")
+        col.operator("object.speckle_update", text='Update')
+        col.operator("object.speckle_reset", text='Reset')
         #row.prop(ob, "speckle_settings.stream_id", text="Stream ID")
 
 #
@@ -73,6 +68,8 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
         col.label("Streams")
         col.operator("scene.speckle_import_stream", text='Import stream')
         col.operator("scene.speckle_delete_stream", text='Delete stream')
+        col.operator("scene.speckle_select_stream", text='Select stream')
+        col.operator("scene.speckle_select_orphans", text='Select orphans')
         col.operator("scene.speckle_not_implemented", text='Create stream')
         col.label("Admin")
         col.operator("scene.speckle_not_implemented", text='Login')

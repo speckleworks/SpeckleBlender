@@ -1,12 +1,12 @@
 import bpy
-from speckle.SpeckleClient import SpeckleClient
+from speckle.api.SpeckleClient import SpeckleClient
 
 def initialize_speckle_client(scene):
     if 'speckle_client' not in scene:
-        scene['speckle_client'] = SpeckleClient()
-        profiles = scene['speckle_client'].LoadProfiles()
+        #scene['speckle_client'] = SpeckleClient()
+        profiles = context.scene.speckle_client.LoadProfiles()
         if len(profiles) < 1: raise ValueError('No profiles found.')
-        self.client.UseExistingProfile(sorted(profiles.keys())[0])
+        context.scene.speckle_client.UseExistingProfile(sorted(profiles.keys())[0])
 
 def get_available_streams(self, context):
     if 'speckle_streams' in context.scene.keys():
