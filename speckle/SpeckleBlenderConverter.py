@@ -1,7 +1,8 @@
 import bpy, bmesh
 import base64, hashlib
 
-from speckle.api.SpeckleObject import SpeckleMesh, SpeckleObject
+from speckle.api.SpeckleObject import SpeckleMesh
+from speckle.api.SpeckleClient import SpeckleResource
 from .util import SPrint
 
 def SetGeometryHash(data):
@@ -14,9 +15,9 @@ def SpeckleMesh_to_Lists(o):
     faces = []
     uv = []
 
-    if hasattr(o, 'properties') and o.properties is not None and 'texture_coordinates' in o.properties:
+    if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
         #s_uvs = o['properties']['texture_coordinates']
-        decoded = base64.b64decode(o.properties['texture_coordinates']).decode("utf-8")
+        decoded = base64.b64decode(o.properties.texture_coordinates).decode("utf-8")
         s_uvs = decoded.split()   
           
         for i in range(0, len(s_uvs), 2):
@@ -93,21 +94,29 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
         # Add material if there is one
     if hasattr(smesh, 'properties') and smesh.properties is not None:
     #if smesh.properties is not None:
-        if 'material' in smesh.properties:
-            material_name = smesh.properties['material']['name']
+        if hasattr(smesh.properties, 'material'):
+            material_name = smesh.properties.material.name
             SPrint ("Found material: %s" % material_name)
             mat = bpy.data.materials.get(material_name)
 
             if mat is None:
                 mat = bpy.data.materials.new(name=material_name)
             obj.data.materials.append(mat)
-            del smesh.properties['material']
+            del smesh.properties.material
         
-        if 'texture_coordinates' in smesh.properties:
-            del smesh.properties['texture_coordinates']
+        if hasattr(smesh.properties, 'texture_coordinates'):
+            del smesh.properties.texture_coordinates
             
-        for key in smesh.properties.keys():
-            obj[key] = smesh.properties[key]
+
+        for key in vars(smesh.properties).keys():
+            attr = getattr(smesh.properties, key)
+            #if isinstance(attr, SpeckleResource):
+            if attr.__class__.__name__ == "SpeckleResource":
+                obj[key] = SpeckleResource.to_dict(attr)
+            else:
+                #print (key, attr)
+                obj[key] = attr
+
 
     return obj
 
@@ -115,8 +124,18 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     verts = [x.co * scale for x in obj.data.vertices]
     faces = [x.vertices for x in obj.data.polygons]
 
-    sm = SpeckleMesh()
-    sm.from_Lists(verts, faces)
+    sm = SpeckleResource.createSpeckleMesh()
+    for v in verts:
+        sm.vertices.extend(v)
+
+    for f in faces:
+        if len(f) == 3:
+            sm.faces.append(0)
+        elif len(f) == 4:
+            sm.faces.append(1)
+        sm.faces.extend(f)
+        
+    #sm.from_Lists(verts, faces)
     sm._id = obj.speckle.object_id
     #sm.hash = obj.name
     #sm.geometryHash = str(obj.__hash__())
@@ -144,15 +163,16 @@ def Speckle_to_Blender(obj, scale=1.0):
     elif obj.type == "Curve":
         print("Curves not supported at this time.") 
     elif obj.type == "Placeholder":
-        print("Placeholder found. Try to get the actual objcet.")
+        print("Placeholder found. Try to get the actual object.")
     elif obj.type == "Brep":
         # transfer name and properties to displayValue
-        obj.displayValue['name'] = obj.name
-        obj.displayValue['_id'] = obj._id
+        setattr(obj.displayValue, 'name', obj.name)
+        setattr(obj.displayValue, '_id', obj._id)
+        #obj.displayValue['name'] = obj.name
+        #obj.displayValue['_id'] = obj._id
         #obj.displayValue['properties'] = obj.properties
 
-        displayObj = SpeckleObject(obj.displayValue)
-        return SpeckleMesh_to_MeshObject(displayObj, scale)
+        return SpeckleMesh_to_MeshObject(obj.displayValue, scale)
 
     return None  
 
@@ -170,7 +190,7 @@ def UpdateObject(client, obj):
             sobj = client.GetObject(obj.speckle.object_id)
             if sobj is not None:
                 SPrint ("Updating local object... ")
-                verts, faces, uv = SpeckleMesh_to_Lists(sobj['resource'])
+                verts, faces, uv = SpeckleMesh_to_Lists(sobj.resource)
                 name = obj.data.name
                 obj.data.name = "x" + obj.data.name
                 mesh = Lists_to_Mesh(verts, faces, uv, name, bpy.context.scene.speckle.scale)

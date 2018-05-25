@@ -2,8 +2,7 @@ import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 from speckle.SpeckleBlenderConverter import SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
-from speckle.api.SpeckleClient import SpeckleClient
-from speckle.api.SpeckleObject import SpeckleMesh, SpeckleObject, SpecklePlaceholder
+from speckle.api.SpeckleClient import SpeckleClient, SpeckleResource
 from speckle.api.SpeckleLayer import SpeckleLayer
 from speckle.api.SpeckleStream import SpeckleStream
 from speckle.SpeckleClientHelper import GetAvailableStreams
@@ -84,15 +83,15 @@ class SpeckleUploadObject(bpy.types.Operator):
 
             res = context.scene.speckle_client.ObjectCreate(sm)
             if res == None: return {'CANCELLED'}
-            sm._id = res['resources'][0]['_id']
-            pl = SpecklePlaceholder(res['resources'][0]['_id'])
+            sm._id = res.resources[0]._id
+            pl = SpeckleResource({'type':'Placeholder', '_id':res.resources[0]._id})
 
             # Get list of existing objects in stream and append new object to list
             res = context.scene.speckle_client.GetStreamObjects(self.available_streams)
             if res is None: return {'CANCELLED'}
 
-            stream_name = res['resource']['name']
-            objects = [SpeckleObject(x) for x in res['resource']['objects']]
+            stream_name = res.resource.name
+            objects = [x for x in res.resource.objects]
             N_current = len(objects)
             objects.append(pl)
 
@@ -100,7 +99,7 @@ class SpeckleUploadObject(bpy.types.Operator):
             if res is None: return {'CANCELLED'}
             print (res)
 
-            layers = res['resource']['layers']
+            layers = res.resource.layers
             new_layers = []
             if layers is None or len(layers) < 1:
                 layer = SpeckleLayer()

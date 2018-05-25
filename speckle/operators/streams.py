@@ -3,10 +3,7 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionPro
 
 from speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 from speckle.api.SpeckleClient import SpeckleClient
-from speckle.api.SpeckleObject import SpeckleObject, SpeckleMesh
 from speckle.SpeckleClientHelper import GetAvailableStreams
-from speckle.api.SpeckleStream import SpeckleStream
-from speckle.api.SpeckleResource import SpeckleResource
 from speckle.api.SpeckleLayer import SpeckleLayerProperties, SpeckleLayer
 from speckle.operators import get_available_streams, initialize_speckle_client
 
@@ -193,15 +190,14 @@ class SpeckleImportStream(bpy.types.Operator):
         res = context.scene.speckle_client.GetStreamObjects(self.available_streams)
         if res is None: return {'CANCELLED'}
 
-        if 'resource' in res.keys():
-            stream = SpeckleStream(res['resource'])
+        if hasattr(res, 'resource'):
+            stream = res.resource
 
             for so in stream.objects:
-                placeholder = SpeckleObject(so)
-                res = context.scene.speckle_client.GetObject(placeholder._id)
+                res = context.scene.speckle_client.GetObject(so._id)
 
-                if 'resource' in res.keys():
-                    obj = SpeckleObject(res['resource'])
+                if hasattr(res, 'resource'):
+                    obj = res.resource
                     o = Speckle_to_Blender(obj, context.scene.speckle.scale)
                     if o is None:
                         continue

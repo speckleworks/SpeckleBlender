@@ -1,4 +1,5 @@
 import json
+from speckle.api.SpeckleClient import SpeckleResource
 
 class SpeckleLayerProperties(object):
     color = ""
@@ -20,6 +21,8 @@ class SpeckleLayerProperties(object):
     def from_json(self, j):
         if type(j) is dict:
             self.__dict__ = j
+        elif j.__class__.__name__ == "SpeckleResource":
+            self.__dict__ = SpeckleResource.to_dict(j)
         else:
             self.__dict__ = json.loads(j)
 
@@ -44,6 +47,8 @@ class SpeckleLayer(object):
     def from_json(self, j):
         if type(j) is dict:
             self.__dict__ = j
+        elif j.__class__.__name__ == "SpeckleResource":
+            self.__dict__ = SpeckleResource.to_dict(j)            
         else:
             self.__dict__ = json.loads(j)
 

@@ -3,6 +3,70 @@ import struct, base64
 
 from speckle.util import SPrint
 
+class SpeckleResource(object):
+    def __init__(self, d):
+        for a, b in d.items():
+            if isinstance(b, (list, tuple)):
+               setattr(self, a, [SpeckleResource(x) if isinstance(x, dict) else x for x in b])
+            else:
+               setattr(self, a, SpeckleResource(b) if isinstance(b, dict) else b)
+
+    @staticmethod
+    def to_dict(obj):
+        '''
+        from https://stackoverflow.com/questions/1036409/recursively-convert-python-object-graph-to-dictionary
+        '''
+        if hasattr(obj, "__dict__"):
+            data = dict([(key, SpeckleResource.to_dict(value))
+                         for key, value in obj.__dict__.items()
+                         if not callable(value) and not key.startswith('_') and key not in ['name']])
+            if hasattr(obj, "__class__"):
+                data['SpeckleResource'] = obj.__class__.__name__
+            return data
+        else:
+            return obj
+
+    @staticmethod
+    def isSpeckleObject(obj):
+        if (hasattr(obj, 'type') and
+        hasattr(obj, '_id') and
+        hasattr(obj, 'hash') and
+        hasattr(obj, 'geometryHash') and
+        hasattr(obj, 'applicationId') and
+        hasattr(obj, 'properties')):
+            return True
+        return False
+
+    @staticmethod
+    def createSpeckleObject():
+        attr = {'type':None,'_id':None, 'hash':1234, 'geometryHash':None,'applicationId':None, 'properties':None}
+        return SpeckleResource(attr)
+
+    @staticmethod
+    def isSpeckleMesh(obj):
+        if (hasattr(obj, 'type') and
+        hasattr(obj, '_id') and
+        hasattr(obj, 'hash') and
+        hasattr(obj, 'geometryHash') and
+        hasattr(obj, 'applicationId') and
+        hasattr(obj, 'vertices') and
+        hasattr(obj, 'faces') and
+        hasattr(obj, 'colors') and
+        hasattr(obj, 'properties')):
+            return True
+        return False
+
+    @staticmethod
+    def createSpeckleMesh():
+        attr = {'type':None,'_id':None, 'hash':1234, 'geometryHash':None,'applicationId':None, 'properties':None,
+        'vertices':[], 'faces':[], 'colors':[]}
+        return SpeckleResource(attr)
+
+    @staticmethod
+    def createSpecklePlaceholder():
+        attr = {'type':None,'_id':None}
+        return SpeckleResource(attr)       
+
 class SpeckleClient(object):
     def __init__(self):
         self.baseUrl = "https://hestia.speckle.works/api/v1"
@@ -83,9 +147,7 @@ class SpeckleClient(object):
         r = requests.post(url, data=json.dumps(profile), headers=headers)
 
         if self.check_response_status_code(r):
-            
-
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UserLogin(self, login_dict):
@@ -109,7 +171,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UserClientsGet(self):
@@ -118,7 +180,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UserGetProfile(self):
@@ -127,7 +189,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None     
 
     def UserUpdateProfile(self, update_dict):
@@ -140,7 +202,7 @@ class SpeckleClient(object):
         r = requests.put(url, data=json.dumps(login_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None         
 
     def ClientCreate(self, create_dict):
@@ -150,7 +212,7 @@ class SpeckleClient(object):
         r = requests.post(url, data=json.dumps(create_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def ClientGet(self, clientId):
@@ -160,7 +222,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def ClientUpdate(self, update_dict, clientId):
@@ -172,7 +234,7 @@ class SpeckleClient(object):
         r = requests.put(url, data=json.dumps(update_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None         
 
     def ClientDelete(self, clientId):
@@ -182,7 +244,7 @@ class SpeckleClient(object):
         r = requests.delete(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def StreamCreate(self, name="Speckle Stream", layers=None):
@@ -199,7 +261,7 @@ class SpeckleClient(object):
         r = requests.post(url, data=json.dumps(create_dict), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def StreamDelete(self, streamId):
@@ -208,7 +270,7 @@ class SpeckleClient(object):
         r = requests.delete(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def GetStreamObjects(self, streamId, query = None):
@@ -220,7 +282,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def ObjectCreate(self, obj):
@@ -241,7 +303,7 @@ class SpeckleClient(object):
         r = requests.post(url, json.dumps(payload), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def ObjectToStream(self, objectId, streamId):
@@ -255,7 +317,7 @@ class SpeckleClient(object):
         r = requests.put(url, json.dumps({"objects":[objectId]}), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None 
 
     def AddObjects(self, obj, streamId):
@@ -272,7 +334,7 @@ class SpeckleClient(object):
         #print(r.text)
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UpdateLayers(self, layers, streamId):
@@ -286,7 +348,7 @@ class SpeckleClient(object):
         #print(r.text)
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UpdateStream(self, stream, streamId):
@@ -295,7 +357,7 @@ class SpeckleClient(object):
         r = requests.put(url, stream.to_json(), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None        
 
     def UpdateObject(self, obj):
@@ -311,7 +373,7 @@ class SpeckleClient(object):
         r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def GetObject(self, objectId):
@@ -321,7 +383,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def GetLayers(self, streamId):
@@ -332,7 +394,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def GetSingleLayer(self, streamId, layerId):
@@ -343,7 +405,7 @@ class SpeckleClient(object):
         r = requests.get(url, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
     def UpdateSingleLayer(self, body, streamId, layerId):
@@ -355,7 +417,7 @@ class SpeckleClient(object):
         r = requests.patch(url, body, headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
-            return r.json()
+            return SpeckleResource(r.json())
         return None
 
 if __name__ == '__main__':
