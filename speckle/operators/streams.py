@@ -16,8 +16,6 @@ class SpeckleDeleteStream(bpy.types.Operator):
     bl_label = "Speckle - Delete Stream"
     bl_options = {'REGISTER', 'UNDO'}
 
-    client = None
-
     available_streams = EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
@@ -38,7 +36,7 @@ class SpeckleDeleteStream(bpy.types.Operator):
     def invoke(self, context, event):
         wm = context.window_manager
 
-        profiles = self.client.LoadProfiles()
+        profiles = context.scene.speckle_client.LoadProfiles()
         if len(profiles) < 1: raise ValueError('No profiles found.')
         context.scene.speckle_client.UseExistingProfile(sorted(profiles.keys())[0])
         context.scene.speckle.user = sorted(profiles.keys())[0]
@@ -57,7 +55,7 @@ class SpeckleDeleteStream(bpy.types.Operator):
             print ("Speckle: Specify stream ID.")
             return {'FINISHED'}
 
-        if self.client is None: 
+        if context.scene.speckle_client is None: 
             print ("SpeckleClient was not initialized...")
             return {'CANCELLED'}
 

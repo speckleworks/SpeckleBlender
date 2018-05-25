@@ -1,7 +1,7 @@
 import bpy, bmesh
 import base64, hashlib
 
-from speckle.api.SpeckleObject import SpeckleMesh
+from speckle.api.SpeckleObject import SpeckleMesh, SpeckleObject
 from .util import SPrint
 
 def SetGeometryHash(data):
@@ -14,8 +14,7 @@ def SpeckleMesh_to_Lists(o):
     faces = []
     uv = []
 
-
-    if o.properties is not None and 'texture_coordinates' in o.properties:
+    if hasattr(o, 'properties') and o.properties is not None and 'texture_coordinates' in o.properties:
         #s_uvs = o['properties']['texture_coordinates']
         decoded = base64.b64decode(o.properties['texture_coordinates']).decode("utf-8")
         s_uvs = decoded.split()   
@@ -92,7 +91,8 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
     obj.speckle.enabled = True
 
         # Add material if there is one
-    if smesh.properties is not None:
+    if hasattr(smesh, 'properties') and smesh.properties is not None:
+    #if smesh.properties is not None:
         if 'material' in smesh.properties:
             material_name = smesh.properties['material']['name']
             SPrint ("Found material: %s" % material_name)
@@ -145,6 +145,14 @@ def Speckle_to_Blender(obj, scale=1.0):
         print("Curves not supported at this time.") 
     elif obj.type == "Placeholder":
         print("Placeholder found. Try to get the actual objcet.")
+    elif obj.type == "Brep":
+        # transfer name and properties to displayValue
+        obj.displayValue['name'] = obj.name
+        obj.displayValue['_id'] = obj._id
+        #obj.displayValue['properties'] = obj.properties
+
+        displayObj = SpeckleObject(obj.displayValue)
+        return SpeckleMesh_to_MeshObject(displayObj, scale)
 
     return None  
 
