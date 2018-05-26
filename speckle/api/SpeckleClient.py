@@ -9,6 +9,9 @@ from speckle.api.SpeckleResource import SpeckleResource
 '''
 
 class SpeckleClient(object):
+
+    verbose = True
+
     def __init__(self):
         self.baseUrl = "https://hestia.speckle.works/api/v1"
         self.authToken = ""
@@ -22,6 +25,11 @@ class SpeckleClient(object):
         print ('SpeckleClient: %s' % msg)
 
     def check_response_status_code(self, r):
+        # debug
+        if self.verbose:
+            print()
+            self.print(json.dumps(r.json(), indent=4, sort_keys=True))
+
         # parse response
         if r.status_code == 200:
             self.print("Request successful: %s" % r.reason)
@@ -31,7 +39,6 @@ class SpeckleClient(object):
             #print(r.text)
         elif r.status_code != 200 and r.status_code != 204:
             self.print("The HTTP status code of the response was not expected: %s, %s" % (r.status_code, r.reason))
-
         return False
 
     def CreateHeader(self):

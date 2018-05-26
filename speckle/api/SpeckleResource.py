@@ -124,3 +124,7 @@ class SpeckleResource(object):
         'children':[], 'ancestors':[]}
         return SpeckleResource(attr)
 
+    @staticmethod
+    def createSpeckleStreamUpdate():
+        attr = {'objects':[], 'layers':[]}
+        return SpeckleResource(attr)

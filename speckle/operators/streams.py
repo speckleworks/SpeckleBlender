@@ -205,23 +205,8 @@ class SpeckleImportStream(bpy.types.Operator):
                     o.speckle.send_or_receive = 'receive'
                     o.select = True
                     bpy.context.scene.objects.link(o)
-        '''               
-        objects = res['resource']['objects']
 
-        for obj in objects:
-            if obj['type'] == "Mesh":
-                o = SpeckleMesh_to_MeshObject(obj, context.scene.speckle.scale)
-                bpy.context.scene.objects.link(o)
-            elif obj['type'] == "Placeholder":
-                obj2 = self.client.GetObject(obj['_id'])
-                if obj2['resource']['type'] == "Mesh":
-                    o = SpeckleMesh_to_MeshObject(obj2['resource'], context.scene.speckle.scale)
-                    o.name = obj2['resource']['name']
-                    o.speckle.stream_id = self.available_streams
-                    o.speckle.send_or_receive = 'receive'
-                    o.select = True
-                    bpy.context.scene.objects.link(o)
-        '''
+        context.scene.update()        
         return {'FINISHED'}
 
 
@@ -248,6 +233,7 @@ class SpeckleUpdateGlobal(bpy.types.Operator):
             if obj.speckle.enabled:
                 UpdateObject(context.scene.speckle_client, obj)
 
+        context.scene.update()
         return {'FINISHED'}
 
 
@@ -265,4 +251,5 @@ class NotImplementedOperator(bpy.types.Operator):
 
         print ("Speckle :: Not implemented.")
 
+        context.scene.update()
         return {'FINISHED'}

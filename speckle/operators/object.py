@@ -20,6 +20,7 @@ class SpeckleUpdateObject(bpy.types.Operator):
         context.scene.speckle_client.UseExistingProfile(sorted(profiles.keys())[0])
 
         UpdateObject(context.scene.speckle_client, context.object)
+        context.scene.update()
 
         return {'FINISHED'}
 
@@ -34,10 +35,9 @@ class SpeckleResetObject(bpy.types.Operator):
         context.object.speckle.stream_id = ""
         context.object.speckle.object_id = ""
         context.object.speckle.enabled = False
+        context.scene.update()
 
         return {'FINISHED'}
-
-
 
 class SpeckleUploadObject(bpy.types.Operator):
     bl_idname = "object.speckle_upload_object"
@@ -49,8 +49,6 @@ class SpeckleUploadObject(bpy.types.Operator):
         description="Available streams associated with account.",
         items=get_available_streams,
         )
-
-    client = None
 
     def draw(self, context):
         layout = self.layout
@@ -82,6 +80,7 @@ class SpeckleUploadObject(bpy.types.Operator):
 
             res = context.scene.speckle_client.ObjectCreate(sm)
             if res == None: return {'CANCELLED'}
+
             sm._id = res.resources[0]._id
             pl = SpeckleResource.createSpecklePlaceholder(res.resources[0]._id)
 
@@ -102,6 +101,7 @@ class SpeckleUploadObject(bpy.types.Operator):
 
             layers = res.resource.layers
             new_layers = []
+            
             if layers is None or len(layers) < 1:
                 layer = SpeckleResource.createSpeckleLayer()
                 layer.name = "Blender"
@@ -117,8 +117,7 @@ class SpeckleUploadObject(bpy.types.Operator):
                 new_layers[-1].objectCount = N + 1
                 new_layers[-1].topology = "0-%s" % (N + 1)
 
-            stream = SpeckleResource.createSpeckleStream()
-            stream.name = stream_name
+            stream = SpeckleResource.createSpeckleStreamUpdate()
             stream.objects = objects
             stream.layers = new_layers
 
@@ -126,12 +125,11 @@ class SpeckleUploadObject(bpy.types.Operator):
             print(SpeckleResource.to_json_pretty(stream))
             res = context.scene.speckle_client.UpdateStream(stream, self.available_streams)
 
-            #res = self.client.AddObjects(objects, self.available_streams)
-            #res = self.client.UpdateLayers(new_layers, self.available_streams)
-
             active.speckle.enabled = True
             active.speckle.object_id = sm._id
             active.speckle.stream_id = self.available_streams
             active.speckle.send_or_receive = 'receive'
+
+            context.scene.update()
 
         return {'FINISHED'}        
