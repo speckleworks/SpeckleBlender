@@ -1,8 +1,7 @@
 import bpy, bmesh
 import base64, hashlib
 
-from speckle.api.SpeckleObject import SpeckleMesh
-from speckle.api.SpeckleClient import SpeckleResource
+from speckle.api.SpeckleResource import SpeckleResource
 from .util import SPrint
 
 def SetGeometryHash(data):
@@ -139,7 +138,7 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     sm._id = obj.speckle.object_id
     #sm.hash = obj.name
     #sm.geometryHash = str(obj.__hash__())
-    sm.geometryHash = SetGeometryHash(sm.to_json())
+    sm.geometryHash = SetGeometryHash(SpeckleResource.to_json(sm))
 
     return sm
 
@@ -147,9 +146,9 @@ def Blender_to_Speckle(obj, scale=1.0):
     if obj.type == 'MESH':
         return MeshObject_to_SpeckleMesh(obj, scale)
     elif obj.type == 'CURVE':
-        SPrint ("This is a curve.")
+        print ("This is a curve.")
     else:
-        SPrint ("Non-supported object type.")
+        print ("Non-supported object type.")
     return None
 
 #def Speckle_to_Blender(sobj, scale=1.0):

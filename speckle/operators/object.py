@@ -2,9 +2,8 @@ import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 from speckle.SpeckleBlenderConverter import SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
-from speckle.api.SpeckleClient import SpeckleClient, SpeckleResource
-from speckle.api.SpeckleLayer import SpeckleLayer
-from speckle.api.SpeckleStream import SpeckleStream
+from speckle.api.SpeckleClient import SpeckleClient
+from speckle.api.SpeckleResource import SpeckleResource
 from speckle.SpeckleClientHelper import GetAvailableStreams
 from speckle.operators import get_available_streams, initialize_speckle_client
 
@@ -84,7 +83,7 @@ class SpeckleUploadObject(bpy.types.Operator):
             res = context.scene.speckle_client.ObjectCreate(sm)
             if res == None: return {'CANCELLED'}
             sm._id = res.resources[0]._id
-            pl = SpeckleResource({'type':'Placeholder', '_id':res.resources[0]._id})
+            pl = SpeckleResource.createSpecklePlaceholder(res.resources[0]._id)
 
             # Get list of existing objects in stream and append new object to list
             res = context.scene.speckle_client.GetStreamObjects(self.available_streams)
@@ -99,10 +98,12 @@ class SpeckleUploadObject(bpy.types.Operator):
             if res is None: return {'CANCELLED'}
             print (res)
 
+            print(SpeckleResource.to_json_pretty(res))
+
             layers = res.resource.layers
             new_layers = []
             if layers is None or len(layers) < 1:
-                layer = SpeckleLayer()
+                layer = SpeckleResource.createSpeckleLayer()
                 layer.name = "Blender"
                 layer.guid = ""
                 layer.orderIndex = 0
@@ -111,16 +112,18 @@ class SpeckleUploadObject(bpy.types.Operator):
                 layer.topology = "0-%s" % len(objects)
                 new_layers.append(layer)
             else:
-                new_layers = [SpeckleLayer(x) for x in layers]
+                new_layers = [x for x in layers]
                 N = new_layers[-1].objectCount
                 new_layers[-1].objectCount = N + 1
                 new_layers[-1].topology = "0-%s" % (N + 1)
 
-            stream = SpeckleStream()
+            stream = SpeckleResource.createSpeckleStream()
             stream.name = stream_name
             stream.objects = objects
             stream.layers = new_layers
 
+            print("Updating: %s" % self.available_streams)
+            print(SpeckleResource.to_json_pretty(stream))
             res = context.scene.speckle_client.UpdateStream(stream, self.available_streams)
 
             #res = self.client.AddObjects(objects, self.available_streams)

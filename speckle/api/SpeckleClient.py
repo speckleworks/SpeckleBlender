@@ -1,71 +1,12 @@
 import requests, json, os
 import struct, base64
 
-from speckle.util import SPrint
+from speckle.api.SpeckleResource import SpeckleResource
 
-class SpeckleResource(object):
-    def __init__(self, d):
-        for a, b in d.items():
-            if isinstance(b, (list, tuple)):
-               setattr(self, a, [SpeckleResource(x) if isinstance(x, dict) else x for x in b])
-            else:
-               setattr(self, a, SpeckleResource(b) if isinstance(b, dict) else b)
-
-    @staticmethod
-    def to_dict(obj):
-        '''
-        from https://stackoverflow.com/questions/1036409/recursively-convert-python-object-graph-to-dictionary
-        '''
-        if hasattr(obj, "__dict__"):
-            data = dict([(key, SpeckleResource.to_dict(value))
-                         for key, value in obj.__dict__.items()
-                         if not callable(value) and not key.startswith('_') and key not in ['name']])
-            if hasattr(obj, "__class__"):
-                data['SpeckleResource'] = obj.__class__.__name__
-            return data
-        else:
-            return obj
-
-    @staticmethod
-    def isSpeckleObject(obj):
-        if (hasattr(obj, 'type') and
-        hasattr(obj, '_id') and
-        hasattr(obj, 'hash') and
-        hasattr(obj, 'geometryHash') and
-        hasattr(obj, 'applicationId') and
-        hasattr(obj, 'properties')):
-            return True
-        return False
-
-    @staticmethod
-    def createSpeckleObject():
-        attr = {'type':None,'_id':None, 'hash':1234, 'geometryHash':None,'applicationId':None, 'properties':None}
-        return SpeckleResource(attr)
-
-    @staticmethod
-    def isSpeckleMesh(obj):
-        if (hasattr(obj, 'type') and
-        hasattr(obj, '_id') and
-        hasattr(obj, 'hash') and
-        hasattr(obj, 'geometryHash') and
-        hasattr(obj, 'applicationId') and
-        hasattr(obj, 'vertices') and
-        hasattr(obj, 'faces') and
-        hasattr(obj, 'colors') and
-        hasattr(obj, 'properties')):
-            return True
-        return False
-
-    @staticmethod
-    def createSpeckleMesh():
-        attr = {'type':None,'_id':None, 'hash':1234, 'geometryHash':None,'applicationId':None, 'properties':None,
-        'vertices':[], 'faces':[], 'colors':[]}
-        return SpeckleResource(attr)
-
-    @staticmethod
-    def createSpecklePlaceholder():
-        attr = {'type':None,'_id':None}
-        return SpeckleResource(attr)       
+'''
+- SpeckleClient payloads are always SpeckleResource objects, never dictionaries
+- SpeckleClient returns are always SpeckleReousrce objects, never dictionaries
+'''
 
 class SpeckleClient(object):
     def __init__(self):
@@ -77,16 +18,19 @@ class SpeckleClient(object):
     '''
     Utility functions
     '''
+    def print(self, msg):
+        print ('SpeckleClient: %s' % msg)
+
     def check_response_status_code(self, r):
         # parse response
         if r.status_code == 200:
-            SPrint("Request successful: %s" % r.reason)
+            self.print("Request successful: %s" % r.reason)
             return True
         elif r.status_code == 400:
-            SPrint("Request failed: %s" % r.reason)
+            self.print("Request failed: %s" % r.reason)
             #print(r.text)
         elif r.status_code != 200 and r.status_code != 204:
-            SPrint("The HTTP status code of the response was not expected: %s, %s" % (r.status_code, r.reason))
+            self.print("The HTTP status code of the response was not expected: %s, %s" % (r.status_code, r.reason))
 
         return False
 
@@ -288,10 +232,7 @@ class SpeckleClient(object):
     def ObjectCreate(self, obj):
         url = self.baseUrl + "/objects"
 
-        if isinstance(obj, dict):
-            payload = obj
-        else:
-            payload = obj.__dict__
+        payload = SpeckleResource.to_dict(obj)
 
         if '_id' in payload.keys():
             del payload['_id']
@@ -327,7 +268,7 @@ class SpeckleClient(object):
         else:
             payload = {"objects":[x if isinstance(x, dict) or isinstance(x, str) else x.__dict__ for x in obj ]}
         #payload = {"objects":[obj]}
-        #SPrint (json.dumps(payload, indent=4, sort_keys=True))
+        #self.print (json.dumps(payload, indent=4, sort_keys=True))
 
         url = self.baseUrl + "/streams/%s" % streamId
         r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
@@ -341,7 +282,7 @@ class SpeckleClient(object):
         assert streamId is not None
         payload = {"layers":[x if isinstance(x, dict) or isinstance(x, str) else x.__dict__ for x in layers ]}
         #payload = {"objects":[obj]}
-        #SPrint (json.dumps(payload, indent=4, sort_keys=True))
+        #self.print (json.dumps(payload, indent=4, sort_keys=True))
 
         url = self.baseUrl + "/streams/%s" % streamId
         r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
@@ -354,7 +295,7 @@ class SpeckleClient(object):
     def UpdateStream(self, stream, streamId):
         assert streamId is not None
         url = self.baseUrl + "/streams/%s" % streamId
-        r = requests.put(url, stream.to_json(), headers=self.CreateHeader())
+        r = requests.put(url, SpeckleResource.to_json(stream), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return SpeckleResource(r.json())
@@ -365,12 +306,14 @@ class SpeckleClient(object):
 
         url = self.baseUrl + "/objects/%s" % obj._id
 
+        '''
         if isinstance(obj, dict):
             payload = obj
         else:
             payload = obj.__dict__
+        '''
 
-        r = requests.put(url, json.dumps(payload), headers=self.CreateHeader())
+        r = requests.put(url, SpeckleResource.to_json(obj), headers=self.CreateHeader())
 
         if self.check_response_status_code(r):
             return SpeckleResource(r.json())
@@ -430,7 +373,7 @@ if __name__ == '__main__':
 
     if res is not None:
         for i in res['resources']:
-            SPrint(i['streamId'])
+            self.print(i['streamId'])
             objects = s.GetStreamObjects(None, i['streamId'])
             print (json.dumps(objects, indent=4, sort_keys=True))
             print()

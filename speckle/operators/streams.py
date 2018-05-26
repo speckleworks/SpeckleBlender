@@ -4,7 +4,6 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionPro
 from speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 from speckle.api.SpeckleClient import SpeckleClient
 from speckle.SpeckleClientHelper import GetAvailableStreams
-from speckle.api.SpeckleLayer import SpeckleLayerProperties, SpeckleLayer
 from speckle.operators import get_available_streams, initialize_speckle_client
 
 
