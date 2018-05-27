@@ -27,7 +27,7 @@ class OBJECT_PT_speckle(bpy.types.Panel):
         col.prop(ob.speckle, "object_id", text="Object ID")
         col.operator("object.speckle_update", text='Update')
         col.operator("object.speckle_reset", text='Reset')
-        #row.prop(ob, "speckle_settings.stream_id", text="Stream ID")
+        col.operator("object.speckle_delete", text='Delete')
 
 #
 #   SCENE_PT_speckle(bpy.types.Panel)

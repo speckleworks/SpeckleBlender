@@ -10,7 +10,7 @@ from speckle.api.SpeckleResource import SpeckleResource
 
 class SpeckleClient(object):
 
-    verbose = True
+    verbose = False
 
     def __init__(self):
         self.baseUrl = "https://hestia.speckle.works/api/v1"
@@ -325,6 +325,16 @@ class SpeckleClient(object):
         if self.check_response_status_code(r):
             return SpeckleResource(r.json())
         return None
+
+    def DeleteObject(self, obj_id):
+        assert obj_id is not None
+
+        url = self.baseUrl + "/objects/%s" % obj_id
+        r = requests.delete(url, headers=self.CreateHeader())
+
+        if self.check_response_status_code(r):
+            return SpeckleResource(r.json())
+        return None        
 
     def GetObject(self, objectId):
         assert objectId is not None

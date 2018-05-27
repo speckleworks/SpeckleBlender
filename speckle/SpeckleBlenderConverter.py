@@ -1,6 +1,6 @@
 import bpy, bmesh
 import base64, hashlib
-from time import gmtime, strftime
+from time import strftime, gmtime
 
 from speckle.api.SpeckleResource import SpeckleResource
 
@@ -106,8 +106,13 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
     return obj
 
 def MeshObject_to_SpeckleMesh(obj, scale=1.0):
+    if obj.data.tessfaces is None or len(obj.data.tessfaces) < 1:
+        obj.data.update(calc_tessface=True)
     verts = [x.co * scale for x in obj.data.vertices]
-    faces = [x.vertices for x in obj.data.polygons]
+
+    # TODO: add n-gon support, using tessfaces for now
+    faces = [x.vertices for x in obj.data.tessfaces]
+    #faces = [x.vertices for x in obj.data.polygons]
 
     sm = SpeckleResource.createSpeckleMesh()
     for v in verts:
@@ -126,7 +131,7 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     # add properties and custom data
     sm.properties = {}
     for key in obj.keys():
-        print (key)
+        #print (key)
         if key == "speckle" or key == "_RNA_UI":
             continue
         sm.properties[key] = obj[key]
@@ -136,16 +141,19 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
 
     # add texture coordinates
     # TODO: make switchable
-    if obj.data.uv_layers.active is not None:
-        uvs = [x.uv for x in obj.data.uv_layers.active.data]
+
+    # Using tessfaces for now - possible future n-gon support
+    #if obj.data.uv_layers.active is not None:
+    if obj.data.tessface_uv_textures.active is not None:
+        uvs = [x.uv for x in obj.data.tessface_uv_textures.active.data]
         uv_string_list = ["%f %f" % (x[0]. x[1]) for x in uvs]
         uv_string = uv_string_list.join(' ')
         sm.properties['texture_coordinates'] = base64.b64encode(uv_string).encode("utf-8")
 
     sm.name = obj.name   
     sm._id = obj.speckle.object_id
-    sm.geometryHash = SetGeometryHash(SpeckleResource.to_json(sm))
-    sm.hash = SetGeometryHash(SpeckleResource.to_json(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
+    sm.geometryHash = SetGeometryHash(SpeckleResource.to_json(sm))[:12]
+    sm.hash = SetGeometryHash(SpeckleResource.to_json(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
 
     return sm
 
@@ -196,6 +204,16 @@ def UpdateObject(client, obj):
                 obj.data = mesh
             else:
                 print ("bpySpeckle: Failed to update object.")
+
+
+def UpdateStream(client, stream_id):
+    res = client.GetStreamObjects(stream_id)
+    if res is None: return False
+
+    objects = [x for x in res.resource.objects]
+    stream = SpeckleResource({"objects":objects})
+
+    res = client.UpdateStream(stream, stream_id)
 
 
 

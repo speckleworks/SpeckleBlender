@@ -17,5 +17,4 @@ class SpeckleObjectSettings(bpy.types.PropertyGroup):
             )
     stream_id = bpy.props.StringProperty(default="")
     object_id = bpy.props.StringProperty(default="")
-    my_float = bpy.props.FloatProperty(default=0.0)
     

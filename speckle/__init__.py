@@ -28,7 +28,7 @@ import traceback
 def register():
     try: bpy.utils.register_module(__name__)
     except: traceback.print_exc()
-    
+
     from . properties.scene import SpeckleSceneSettings, SpeckleSceneObject
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
 
