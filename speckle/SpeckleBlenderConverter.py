@@ -17,10 +17,13 @@ def SpeckleMesh_to_Lists(o):
 
     if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
         decoded = base64.b64decode(o.properties.texture_coordinates).decode("utf-8")
-        s_uvs = decoded.split()   
+        s_uvs = decoded.split()
           
-        for i in range(0, len(s_uvs), 2):
-            uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
+        if len(s_uvs) * 2 == len(o.vertices):
+            for i in range(0, len(s_uvs), 2):
+                uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
+        else:
+            print ("Failed to match UV coordinates to vert data.")
     
     if len(o.vertices) > 0:
         for i in range(0, len(o.vertices), 3):
@@ -107,7 +110,7 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
 
 def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     if obj.data.tessfaces is None or len(obj.data.tessfaces) < 1:
-        obj.data.update(calc_tessface=True)
+        obj.data.calc_tessface()
     verts = [x.co * scale for x in obj.data.vertices]
 
     # TODO: add n-gon support, using tessfaces for now
@@ -146,9 +149,9 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     #if obj.data.uv_layers.active is not None:
     if obj.data.tessface_uv_textures.active is not None:
         uvs = [x.uv for x in obj.data.tessface_uv_textures.active.data]
-        uv_string_list = ["%f %f" % (x[0]. x[1]) for x in uvs]
-        uv_string = uv_string_list.join(' ')
-        sm.properties['texture_coordinates'] = base64.b64encode(uv_string).encode("utf-8")
+        uv_string_list = ["%f %f" % (x[0][0], x[0][1]) for x in uvs]
+        uv_string = ' '.join(uv_string_list)
+        sm.properties['texture_coordinates'] = base64.encodestring(uv_string.encode("utf-8")).decode("utf-8")
 
     sm.name = obj.name   
     sm._id = obj.speckle.object_id
