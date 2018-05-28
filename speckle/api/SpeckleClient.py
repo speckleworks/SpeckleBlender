@@ -216,7 +216,6 @@ class SpeckleClient(object):
         return None 
 
     def StreamDelete(self, streamId):
-
         url = self.baseUrl + "/streams/%s" % streamId
         r = requests.delete(url, headers=self.CreateHeader())
 
@@ -238,13 +237,10 @@ class SpeckleClient(object):
 
     def ObjectCreate(self, obj):
         url = self.baseUrl + "/objects"
-
         payload = SpeckleResource.to_dict(obj)
 
         if '_id' in payload.keys():
             del payload['_id']
-        #if 'geometryHash' in payload.keys():
-        #    del payload['geometryHash']
         if 'hash' in payload.keys():
             del payload['hash']
 

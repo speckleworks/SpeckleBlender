@@ -10,7 +10,7 @@ def SetGeometryHash(data):
 
 def SpeckleMesh_to_Lists(o):
     #check if o is valid Speckle mesh
-    assert SpeckleResource.isSpeckleMesh(o);
+    #assert SpeckleResource.isSpeckleMesh(o);
     verts = []
     faces = []
     uv = []
@@ -25,11 +25,11 @@ def SpeckleMesh_to_Lists(o):
         else:
             print ("Failed to match UV coordinates to vert data.")
     
-    if len(o.vertices) > 0:
+    if hasattr(o, 'vertices') and len(o.vertices) > 0:
         for i in range(0, len(o.vertices), 3):
             verts.append((float(o.vertices[i]), float(o.vertices[i + 1]), float(o.vertices[i + 2])))
 
-    if len(o.faces) > 0:
+    if hasattr(o, 'faces') and len(o.faces) > 0:
         i = 0
         while (i < len(o.faces)):
             if (o.faces[i] == 0):
@@ -137,10 +137,14 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
         #print (key)
         if key == "speckle" or key == "_RNA_UI":
             continue
-        sm.properties[key] = obj[key]
+        if hasattr(obj[key], 'to_dict'):
+            sm.properties[key] = obj[key].to_dict()
+        else:            
+            sm.properties[key] = obj[key]
 
     # send object transform
-    sm.properties['transform'] = [[y for y in x] for x in obj.matrix_world]
+    sm.properties['transform'] = str([y for x in obj.matrix_world for y in x])
+    #sm.properties['transform'] = [[y for y in x] for x in obj.matrix_world]
 
     # add texture coordinates
     # TODO: make switchable
@@ -207,7 +211,6 @@ def UpdateObject(client, obj):
                 obj.data = mesh
             else:
                 print ("bpySpeckle: Failed to update object.")
-
 
 def UpdateStream(client, stream_id):
     res = client.GetStreamObjects(stream_id)
