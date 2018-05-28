@@ -131,7 +131,7 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
 
         sm.faces.extend(f)
 
-    # add properties and custom data
+    # Add properties and custom data
     sm.properties = {}
     for key in obj.keys():
         #print (key)
@@ -142,11 +142,15 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
         else:            
             sm.properties[key] = obj[key]
 
-    # send object transform
+    # Set object transform
+    setattr(sm, 'transform', [y for x in obj.matrix_world for y in x])
+
+    # This is still needed until there is a way to access the transform property in 
+    # other programs.
     sm.properties['transform'] = str([y for x in obj.matrix_world for y in x])
     #sm.properties['transform'] = [[y for y in x] for x in obj.matrix_world]
 
-    # add texture coordinates
+    # Add texture coordinates
     # TODO: make switchable
 
     # Using tessfaces for now - possible future n-gon support
