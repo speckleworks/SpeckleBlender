@@ -1,4 +1,5 @@
 import bpy, bmesh,os
+import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 from speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
@@ -6,6 +7,87 @@ from speckle.api.SpeckleClient import SpeckleClient
 from speckle.SpeckleClientHelper import GetAvailableStreams
 from speckle.operators import get_available_streams, initialize_speckle_client
 
+class SpeckleViewStreamDataApi(bpy.types.Operator):
+    bl_idname = "scene.speckle_view_stream_data_api"
+    bl_label = "Speckle - View Stream Data (API)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    available_streams = EnumProperty(
+        name="Available streams",
+        description="Available streams associated with account.",
+        items=get_available_streams,
+        )
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "available_streams")
+        
+    def invoke(self, context, event):
+        wm = context.window_manager
+
+        profiles = context.scene.speckle_client.LoadProfiles()
+        if len(profiles) < 1: raise ValueError('No profiles found.')
+        context.scene.speckle_client.UseExistingProfile(sorted(profiles.keys())[0])
+        context.scene.speckle.user = sorted(profiles.keys())[0]
+
+        stream_ids = GetAvailableStreams(context.scene.speckle_client)
+        context.scene['speckle_streams'] = stream_ids
+
+        return wm.invoke_props_dialog(self)    
+
+    def execute(self, context):
+        if self.available_streams == "":
+            print ("Speckle: Specify stream ID.")
+            return {'FINISHED'}
+
+        if context.scene.speckle_client is None: 
+            print ("SpeckleClient was not initialized...")
+            return {'CANCELLED'}
+
+        webbrowser.open('%s/streams/%s' % (context.scene.speckle_client.baseUrl, self.available_streams), new=2)
+        return {'FINISHED'}
+
+class SpeckleViewStreamObjectsApi(bpy.types.Operator):
+    bl_idname = "scene.speckle_view_stream_objects_api"
+    bl_label = "Speckle - View Stream Objects (API)"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    available_streams = EnumProperty(
+        name="Available streams",
+        description="Available streams associated with account.",
+        items=get_available_streams,
+        )
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "available_streams")
+        
+    def invoke(self, context, event):
+        wm = context.window_manager
+
+        profiles = context.scene.speckle_client.LoadProfiles()
+        if len(profiles) < 1: raise ValueError('No profiles found.')
+        context.scene.speckle_client.UseExistingProfile(sorted(profiles.keys())[0])
+        context.scene.speckle.user = sorted(profiles.keys())[0]
+
+        stream_ids = GetAvailableStreams(context.scene.speckle_client)
+        context.scene['speckle_streams'] = stream_ids
+
+        return wm.invoke_props_dialog(self)    
+
+    def execute(self, context):
+        if self.available_streams == "":
+            print ("Speckle: Specify stream ID.")
+            return {'FINISHED'}
+
+        if context.scene.speckle_client is None: 
+            print ("SpeckleClient was not initialized...")
+            return {'CANCELLED'}
+
+        webbrowser.open('%s/streams/%s/objects?omit=displayValue,base64' % (context.scene.speckle_client.baseUrl, self.available_streams), new=2)
+        return {'FINISHED'}
 
 class SpeckleDeleteStream(bpy.types.Operator):
     bl_idname = "scene.speckle_delete_stream"

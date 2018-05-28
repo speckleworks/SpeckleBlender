@@ -1,5 +1,5 @@
 bl_info = {
-    "name": "A Blend of Speckle",
+    "name": "SpeckleBlender",
     "author": "Tom Svilans",
     "version": (1, 0, 0),
     "blender": (2, 79, 0),
