@@ -1,21 +1,28 @@
 # SpeckleBlender
 Speckle for Blender Client
 
-# Update - May 2, 2018
+#Update - November 15, 2018
+
+This update separates the plug-in into a generic Python client which is available through `pip` and a Blender add-on interface. 
+
 ## Disclaimer
 This code is very WIP and as such should be used with extreme caution, on non-sensitive projects.
 There is much to be tightened up, optimized, organized, etc. but the basic functionality is there.
-`SpeckleClient.py` could be adapted for generic Python usage.
 
 ## Installation
 
-This works like a normal Blender add-on:
-1. Download the 'speckle' folder
+Install [PySpeckle](https://github.com/speckleworks/PySpeckle) through `pip`, making sure to use Blender's Python. Installing `pip` for Blender is possible, and is done as usual except taking care to make sure that you are operating in Blender's Python environment.
+
+`pip install speckle`
+
+
+The add-on works like a normal Blender add-on:
+1. Download the 'bpy_speckle' folder
 2. Place into 'BLENDER_DIRECTORY/VERSION#/scripts/addons_contrib'
 3. Start Blender
 4. Go to User Preferences (Ctrl + Alt + U)
 5. Go to the Add-ons tab
-6. Find and enable A Blend of Speckle in the Testing category
+6. Find and enable `Speckle Blender` in the Testing category
 7. Click Save User Settings
 
 ## Usage
@@ -23,7 +30,7 @@ This works like a normal Blender add-on:
 Usage is fairly simple, but for now is with a couple caveats:
 1. There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.
 2. SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.
-3. Currently, only Mesh objects are supported. Anything else will be ignored. Curve objects could be supported in the future.
+3. Currently, only Mesh objects are supported. Importing Breps is possible, but will only import their display mesh. Polylines and curves will be introduced soon. Anything else will be ignored. 
 
 **SpeckleBlender** adds some operators:
 - **Speckle - Import Stream** : Choose from a stream in your profile and import all objects from that stream.

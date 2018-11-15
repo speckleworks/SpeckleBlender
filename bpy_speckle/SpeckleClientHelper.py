@@ -1,8 +1,8 @@
-from speckle.api.SpeckleClient import SpeckleClient
+from speckle import SpeckleApiClient
 
 def GetAvailableStreams(client):
     if client is None: return None
-    res = client.GetStreams()
+    res = client.StreamsGetAllAsync()
     if res is not None:
         streams = {}
         for i in res.resources:

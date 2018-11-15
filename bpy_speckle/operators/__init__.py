@@ -1,5 +1,5 @@
 import bpy
-from speckle.api.SpeckleClient import SpeckleClient
+from speckle import SpeckleApiClient
 
 def initialize_speckle_client(scene):
     if 'speckle_client' not in scene:

@@ -2,7 +2,7 @@ import bpy, bmesh
 import base64, hashlib
 from time import strftime, gmtime
 
-from speckle.api.SpeckleResource import SpeckleResource
+from speckle import SpeckleResource
 
 def SetGeometryHash(data):
     code = hashlib.md5(data.encode('utf-8')).hexdigest()
@@ -16,14 +16,19 @@ def SpeckleMesh_to_Lists(o):
     uv = []
 
     if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
-        decoded = base64.b64decode(o.properties.texture_coordinates).decode("utf-8")
-        s_uvs = decoded.split()
-          
-        if len(s_uvs) * 2 == len(o.vertices):
-            for i in range(0, len(s_uvs), 2):
-                uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
-        else:
-            print ("Failed to match UV coordinates to vert data.")
+        try:
+            decoded = base64.b64decode(o.properties.texture_coordinates).decode("utf-8")
+            s_uvs = decoded.split()
+              
+            if int(len(s_uvs) / 2) == int(len(o.vertices) / 3):
+                for i in range(0, len(s_uvs), 2):
+                    uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
+            else:
+                print (len(s_uvs) * 2)
+                print (len(o.vertices) /3)
+                print ("Failed to match UV coordinates to vert data.")
+        except:
+            pass
     
     if hasattr(o, 'vertices') and len(o.vertices) > 0:
         for i in range(0, len(o.vertices), 3):
@@ -47,6 +52,12 @@ def SpeckleMesh_to_Lists(o):
     return verts, faces, uv
 
 def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
+
+    mesh = bpy.data.meshes.new(name)
+
+    #mesh.from_pydata(verts, [], faces)
+
+    
     bm = bmesh.new()
     
     # Make verts
@@ -61,9 +72,9 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
             
     bm.faces.ensure_lookup_table()
     bm.verts.index_update()
-            
+           
     # Make UVs
-    if len(uv) > 0:
+    if len(uv) == len(verts):
         uv_layer = bm.loops.layers.uv.verify()
         bm.faces.layers.tex.verify()
         
@@ -72,7 +83,6 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
                 luv = l[uv_layer]
                 luv.uv = uv[l.vert.index]
 
-    mesh = bpy.data.meshes.new(name)
 
     bm.to_mesh(mesh)
     bm.free()
@@ -89,9 +99,11 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
 
         # Add material if there is one
     if hasattr(smesh, 'properties') and smesh.properties is not None:
+
         if hasattr(smesh.properties, 'material'):
             material_name = smesh.properties.material.name
             print ("bpySpeckle: Found material: %s" % material_name)
+
             mat = bpy.data.materials.get(material_name)
 
             if mat is None:
@@ -201,10 +213,10 @@ def UpdateObject(client, obj):
             sobj = Blender_to_Speckle(obj, 1 / bpy.context.scene.speckle.scale)
             if sobj is not None:
                 print ("bpySpeckle: Updating remote object...")
-                res = client.UpdateObject(sobj)
+                res = client.ObjectUpdateAsync(sobj._id, sobj)
         elif obj.speckle.send_or_receive == 'receive':
             print ("bpySpeckle: Updating with receive...")
-            sobj = client.GetObject(obj.speckle.object_id)
+            sobj = client.ObjectGetAsync(obj.speckle.object_id)
             if sobj is not None:
                 print ("bpySpeckle: Updating local object... ")
                 verts, faces, uv = SpeckleMesh_to_Lists(sobj.resource)
@@ -217,13 +229,13 @@ def UpdateObject(client, obj):
                 print ("bpySpeckle: Failed to update object.")
 
 def UpdateStream(client, stream_id):
-    res = client.GetStreamObjects(stream_id)
+    res = client.StreamGetAsync(stream_id)
     if res is None: return False
 
     objects = [x for x in res.resource.objects]
     stream = SpeckleResource({"objects":objects})
 
-    res = client.UpdateStream(stream, stream_id)
+    res = client.StreamUpdateAsync(stream, stream_id)
 
 
 
