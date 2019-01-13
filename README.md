@@ -1,13 +1,13 @@
 # SpeckleBlender
 Speckle for Blender Client
 
-# Updates
+## Updates
 
-## January 13, 2019
+### January 13, 2019
 
 This update adds support for loading local user accounts and logging in with a new account. New logged in accounts will be saved to disk. Loading an account also lists all the available streams for that account.
 
-## November 15, 2018
+### November 15, 2018
 
 This update separates the plug-in into a generic Python client which is available through `pip` and a Blender add-on interface. 
 
