@@ -2,7 +2,7 @@ import bpy, bmesh
 import base64, hashlib
 from time import strftime, gmtime
 
-from speckle import SpeckleResource
+#from speckle import SpeckleResource
 
 def SetGeometryHash(data):
     code = hashlib.md5(data.encode('utf-8')).hexdigest()
@@ -15,44 +15,47 @@ def SpeckleMesh_to_Lists(o):
     faces = []
     uv = []
 
-    if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
+    if 'properties' in o.keys() and o['properties'] is not None and 'texture_coordinates' in o['properties'].keys():
+    #if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
         try:
-            decoded = base64.b64decode(o.properties.texture_coordinates).decode("utf-8")
+            decoded = base64.b64decode(o['properties']['texture_coordinates']).decode("utf-8")
             s_uvs = decoded.split()
               
-            if int(len(s_uvs) / 2) == int(len(o.vertices) / 3):
+            if int(len(s_uvs) / 2) == int(len(o['vertices']) / 3):
                 for i in range(0, len(s_uvs), 2):
                     uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
             else:
                 print (len(s_uvs) * 2)
-                print (len(o.vertices) /3)
+                print (len(o['vertices']) /3)
                 print ("Failed to match UV coordinates to vert data.")
         except:
             pass
     
-    if hasattr(o, 'vertices') and len(o.vertices) > 0:
-        for i in range(0, len(o.vertices), 3):
-            verts.append((float(o.vertices[i]), float(o.vertices[i + 1]), float(o.vertices[i + 2])))
+    if 'vertices' in o.keys() and len(o['vertices']) > 0:
+        for i in range(0, len(o['vertices']), 3):
+            verts.append((float(o['vertices'][i]), float(o['vertices'][i + 1]), float(o['vertices'][i + 2])))
 
-    if hasattr(o, 'faces') and len(o.faces) > 0:
+    if 'faces' in o.keys() and len(o['faces']) > 0:
         i = 0
-        while (i < len(o.faces)):
-            if (o.faces[i] == 0):
+        while (i < len(o['faces'])):
+            if (o['faces'][i] == 0):
                 i += 1
-                faces.append((int(o.faces[i]), int(o.faces[i + 1]), int(o.faces[i + 2])))
+                faces.append((int(o['faces'][i]), int(o['faces'][i + 1]), int(o['faces'][i + 2])))
                 i += 3
-            elif (o.faces[i] == 1):
+            elif (o['faces'][i] == 1):
                 i += 1
-                faces.append((int(o.faces[i]), int(o.faces[i + 1]), int(o.faces[i + 2]), int(o.faces[i + 3])))
+                faces.append((int(o['faces'][i]), int(o['faces'][i + 1]), int(o['faces'][i + 2]), int(o['faces'][i + 3])))
                 i += 4
             else:
-                print("Invalid face length.\n" + str(o.faces[i]))
+                print("Invalid face length.\n" + str(o['faces'][i]))
                 return
 
     return verts, faces, uv
 
 def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
 
+    if name is None or name=="":
+        name = "SpeckleMesh"
     mesh = bpy.data.meshes.new(name)
 
     #mesh.from_pydata(verts, [], faces)
@@ -90,18 +93,20 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
     return mesh
 
 def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
+    if smesh['name'] is None or smesh['name'] == "":
+        smesh['name'] = "SpeckleMesh"
     verts, faces, uv = SpeckleMesh_to_Lists(smesh)
-    mesh = Lists_to_Mesh(verts, faces, uv, smesh.geometryHash, scale)
+    mesh = Lists_to_Mesh(verts, faces, uv, smesh['geometryHash'], scale)
 
-    obj = bpy.data.objects.new(smesh.name, mesh)
-    obj.speckle.object_id = smesh._id
+    obj = bpy.data.objects.new(smesh['name'], mesh)
+    obj.speckle.object_id = smesh['_id']
     obj.speckle.enabled = True
 
         # Add material if there is one
-    if hasattr(smesh, 'properties') and smesh.properties is not None:
+    if 'properties' in smesh.keys()  and smesh['properties'] is not None:
 
-        if hasattr(smesh.properties, 'material'):
-            material_name = smesh.properties.material.name
+        if 'material' in smesh['properties'].keys():
+            material_name = smesh['properties']['material']['name']
             print ("bpySpeckle: Found material: %s" % material_name)
 
             mat = bpy.data.materials.get(material_name)
@@ -109,14 +114,14 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
             if mat is None:
                 mat = bpy.data.materials.new(name=material_name)
             obj.data.materials.append(mat)
-            del smesh.properties.material
+            del smesh['properties']['material']
         
-        if hasattr(smesh.properties, 'texture_coordinates'):
-            del smesh.properties.texture_coordinates
+        if  'texture_coordinates' in smesh['properties'].keys() :
+            del smesh['properties']['texture_coordinates']
 
-        for key in vars(smesh.properties).keys():
-            attr = getattr(smesh.properties, key)
-            obj[key] = SpeckleResource.to_dict(attr)
+        for key in smesh['properties'].keys():
+            attr = smesh['properties'][key]
+            obj[key] = attr
 
     return obj
 
@@ -129,37 +134,40 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     faces = [x.vertices for x in obj.data.tessfaces]
     #faces = [x.vertices for x in obj.data.polygons]
 
-    sm = SpeckleResource.createSpeckleMesh()
+    #sm = SpeckleResource.createSpeckleMesh()
+    sm = {'vertices':[], 'faces':[]}
+
     for v in verts:
-        sm.vertices.extend(v)
+        sm['vertices'].extend(v)
 
     for f in faces:
         if len(f) == 3:
-            sm.faces.append(0)
+            sm['faces'].append(0)
         elif len(f) == 4:
-            sm.faces.append(1)
+            sm['faces'].append(1)
         else:
             continue
 
-        sm.faces.extend(f)
+        sm['faces'].extend(f)
 
     # Add properties and custom data
-    sm.properties = {}
+    sm['properties'] = {}
     for key in obj.keys():
         #print (key)
         if key == "speckle" or key == "_RNA_UI":
             continue
         if hasattr(obj[key], 'to_dict'):
-            sm.properties[key] = obj[key].to_dict()
+            sm['properties'][key] = obj[key].to_dict()
         else:            
-            sm.properties[key] = obj[key]
+            sm['properties'][key] = obj[key]
 
     # Set object transform
-    setattr(sm, 'transform', [y for x in obj.matrix_world for y in x])
+    sm['transform'] = [y for x in obj.matrix_world for y in x]
+    #setattr(sm, 'transform', [y for x in obj.matrix_world for y in x])
 
     # This is still needed until there is a way to access the transform property in 
     # other programs.
-    sm.properties['transform'] = str([y for x in obj.matrix_world for y in x])
+    sm['properties']['transform'] = str([y for x in obj.matrix_world for y in x])
     #sm.properties['transform'] = [[y for y in x] for x in obj.matrix_world]
 
     # Add texture coordinates
@@ -171,12 +179,12 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
         uvs = [x.uv for x in obj.data.tessface_uv_textures.active.data]
         uv_string_list = ["%f %f" % (x[0][0], x[0][1]) for x in uvs]
         uv_string = ' '.join(uv_string_list)
-        sm.properties['texture_coordinates'] = base64.encodestring(uv_string.encode("utf-8")).decode("utf-8")
+        sm['properties']['texture_coordinates'] = base64.encodestring(uv_string.encode("utf-8")).decode("utf-8")
 
-    sm.name = obj.name   
-    sm._id = obj.speckle.object_id
-    sm.geometryHash = SetGeometryHash(SpeckleResource.to_json(sm))[:12]
-    sm.hash = SetGeometryHash(SpeckleResource.to_json(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
+    sm['name'] = obj.name   
+    sm['_id'] = obj.speckle.object_id
+    sm['geometryHash'] = SetGeometryHash(str(sm))[:12]
+    sm['hash'] = SetGeometryHash(str(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
 
     return sm
 
@@ -190,19 +198,22 @@ def Blender_to_Speckle(obj, scale=1.0):
     return None
 
 def Speckle_to_Blender(obj, scale=1.0):
-    if obj.type == "Mesh":
+    if obj['type'] == "Mesh":
         return SpeckleMesh_to_MeshObject(obj, scale)
-    elif obj.type == "Curve":
+    elif obj['type'] == "Curve":
         print("bpySpeckle: Curves not supported at this time.") 
-    elif obj.type == "Placeholder":
+    elif obj['type'] == "Placeholder":
         print("bpySpeckle: Placeholder found. Try to get the actual object.")
-    elif obj.type == "Brep":
+    elif obj['type'] == "Brep":
         # transfer name and properties to displayValue
-        setattr(obj.displayValue, 'name', obj.name)
-        setattr(obj.displayValue, '_id', obj._id)
-        setattr(obj.displayValue, 'properties', obj.properties)
+        obj['displayValue']['name'] = obj['name']
+        obj['displayValue']['_id'] = obj['_id']
+        obj['displayValue']['properties'] = obj['properties']
+        #setattr(obj.displayValue, 'name', obj.name)
+        #setattr(obj.displayValue, '_id', obj._id)
+        #setattr(obj.displayValue, 'properties', obj.properties)
 
-        return SpeckleMesh_to_MeshObject(obj.displayValue, scale)
+        return SpeckleMesh_to_MeshObject(obj['displayValue'], scale)
 
     return None  
 
@@ -219,7 +230,7 @@ def UpdateObject(client, obj):
             sobj = client.ObjectGetAsync(obj.speckle.object_id)
             if sobj is not None:
                 print ("bpySpeckle: Updating local object... ")
-                verts, faces, uv = SpeckleMesh_to_Lists(sobj.resource)
+                verts, faces, uv = SpeckleMesh_to_Lists(sobj['resource'])
                 name = obj.data.name
                 obj.data.name = "x" + obj.data.name
                 mesh = Lists_to_Mesh(verts, faces, uv, name, bpy.context.scene.speckle.scale)
@@ -232,10 +243,10 @@ def UpdateStream(client, stream_id):
     res = client.StreamGetAsync(stream_id)
     if res is None: return False
 
-    objects = [x for x in res.resource.objects]
-    stream = SpeckleResource({"objects":objects})
+    objects = [x for x in res['resource']['objects']]
+    stream = {"objects":objects}
 
-    res = client.StreamUpdateAsync(stream, stream_id)
+    res = client.StreamUpdateAsync(stream_id, stream)
 
 
 

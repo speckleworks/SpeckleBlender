@@ -29,7 +29,10 @@ def register():
     try: bpy.utils.register_module(__name__)
     except: traceback.print_exc()
 
-    from . properties.scene import SpeckleSceneSettings, SpeckleSceneObject
+    from . properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject
+    
+    bpy.types.Scene.speckle_act_acc = bpy.props.IntProperty(default=0)
+    bpy.types.Scene.speckle_act_str = bpy.props.IntProperty(default=0)
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
 
     from . properties.object import SpeckleObjectSettings

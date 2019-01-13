@@ -5,8 +5,8 @@ def GetAvailableStreams(client):
     res = client.StreamsGetAllAsync()
     if res is not None:
         streams = {}
-        for i in res.resources:
-            streams[i.streamId] = i.name
+        for i in res['resources']:
+            streams[i['streamId']] = i['name']
         return streams
     return None
 

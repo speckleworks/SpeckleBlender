@@ -4,7 +4,6 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionPro
 
 from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 from speckle import SpeckleApiClient
-from speckle import SpeckleResource
 
 from bpy_speckle.SpeckleClientHelper import GetAvailableStreams
 from bpy_speckle.operators import get_available_streams, initialize_speckle_client
@@ -274,10 +273,10 @@ class SpeckleImportStream(bpy.types.Operator):
         res = context.scene.speckle_client.StreamGetObjectsAsync(self.available_streams)
         if res is None: return {'CANCELLED'}
 
-        if hasattr(res, 'resources'):
-            stream = res.resources
+        if 'resources' in res.keys():
+            stream = res['resources']
 
-            for resource in res.resources:
+            for resource in res['resources']:
                 o = Speckle_to_Blender(resource, context.scene.speckle.scale)
 
                 if o is None:
@@ -289,7 +288,8 @@ class SpeckleImportStream(bpy.types.Operator):
                 bpy.context.scene.objects.link(o)
 
         else:
-            print(SpeckleResource.to_json_pretty(res))
+            #print(SpeckleResource.to_json_pretty(res))
+            pass
 
         context.scene.update()
         #print ("Received %i objects." % len(res.resources))
@@ -340,10 +340,10 @@ class SpeckleImportStreamRaw(bpy.types.Operator):
         res = context.scene.speckle_client.StreamGetObjectsAsync(self.stream_id)
         if res is None: return {'CANCELLED'}
 
-        if hasattr(res, 'resources'):
-            stream = res.resources
+        if 'resources' in res.keys():
+            stream = res['resources']
 
-            for resource in res.resources:
+            for resource in res['resources']:
                 o = Speckle_to_Blender(resource, context.scene.speckle.scale)
 
                 if o is None:
@@ -355,7 +355,8 @@ class SpeckleImportStreamRaw(bpy.types.Operator):
                 bpy.context.scene.objects.link(o)
 
         else:
-            print(SpeckleResource.to_json_pretty(res))
+            #print(SpeckleResource.to_json_pretty(res))
+            pass
 
         context.scene.update()
         #print ("Received %i objects." % len(res.resources))
