@@ -32,8 +32,8 @@ The add-on works like a normal Blender add-on:
 ## Usage
 
 Usage is fairly simple, but for now is with a couple caveats:
-~~1. There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.~~
-~~2. SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.~~
+1. ~~There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.~~
+2. ~~SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.~~
 3. Currently, only Mesh objects are supported. Importing Breps is possible, but will only import their display mesh. Polylines and curves will be introduced soon. Anything else will be ignored. 
 
 **SpeckleBlender** adds some operators:
