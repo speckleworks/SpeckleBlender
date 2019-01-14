@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty, IntProperty
 
 class SpeckleSceneObject(bpy.types.PropertyGroup):
     name = bpy.props.StringProperty(default="")
@@ -14,6 +14,7 @@ class SpeckleUserAccountObject(bpy.types.PropertyGroup):
     authToken = StringProperty(default="")
     server = StringProperty(default="")
     streams = CollectionProperty(type=SpeckleStreamObject)
+    active_stream = IntProperty(default=0)
 
 class SpeckleSceneSettings(bpy.types.PropertyGroup):
     streams = bpy.props.EnumProperty(
@@ -23,6 +24,7 @@ class SpeckleSceneSettings(bpy.types.PropertyGroup):
         )
 
     accounts = CollectionProperty(type=SpeckleUserAccountObject)
+    active_account = IntProperty(default=0)
     objects = CollectionProperty(type=SpeckleSceneObject)
     scale = FloatProperty(default=0.001)
     user = StringProperty(

@@ -54,12 +54,6 @@ class SpeckleAddAccount(bpy.types.Operator):
 
         client = SpeckleApiClient()
         client.server = self.server
-            
-            #context.scene.speckle.accounts.add(SpeckleUserAccountObject(
-            #    name=profiles[p]["server_name"], 
-            #    server=profiles[p]["server"], 
-            #    email=p, 
-            #    authToken = profiles[p]["authtoken"]))
 
         if self.server is "":
             return {'FINISHED'}
@@ -104,8 +98,8 @@ class SpeckleImportStream2(bpy.types.Operator):
             return {'CANCELLED'}
 
         client = context.scene.speckle_client
-        account = context.scene.speckle.accounts[context.scene.speckle_act_acc]
-        stream = context.scene.speckle.accounts[context.scene.speckle_act_acc].streams[context.scene.speckle_act_str]
+        account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+        stream =account.streams[account.active_stream]
         
         client.server = account.server
         client.session.headers.update({'Authorization': account.authToken})

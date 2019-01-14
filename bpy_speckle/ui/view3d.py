@@ -66,17 +66,21 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
 
         col.label("Accounts")
         if len(speckle.accounts) > 0:
-            col.label("Current user: %s" % speckle.accounts[scn.speckle_act_acc].name)
+            col.label("Current user: %s" % speckle.accounts[speckle.active_account].name)
 
         col.operator("scene.speckle_account_add", text="Add Account")
         col.operator("scene.speckle_accounts_load", text="Load Accounts")
-        col.template_list("VIEW3D_UL_SpeckleAccounts", "", speckle, "accounts", scn, "speckle_act_acc")
+        col.template_list("VIEW3D_UL_SpeckleAccounts", "", speckle, "accounts", speckle, "active_account")
         col.label("Streams")
+        
         if len(speckle.accounts) > 0:
-            col.template_list("VIEW3D_UL_SpeckleStreams", "", speckle.accounts[context.scene.speckle_act_acc], "streams", scn, "speckle_act_str")
+            speckle.active_account = min(speckle.active_account, len(speckle.accounts) - 1)
+            account = speckle.accounts[speckle.active_account]
+            col.template_list("VIEW3D_UL_SpeckleStreams", "", account, "streams", account, "active_stream")
             col.operator("scene.speckle_import_stream2", text="Load Stream")
-            if len(speckle.accounts[scn.speckle_act_acc].streams > 0)
-                col.label("Active stream: %s" % speckle.accounts[scn.speckle_act_acc].streams[scn.speckle_act_str].name)
+            if len(account.streams) > 0:
+                account.active_stream = min(account.active_stream, len(account.streams) - 1)
+                col.label("Active stream: %s" % account.streams[account.active_stream].name)
 
 
         col.label("View")
