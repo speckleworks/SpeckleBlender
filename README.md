@@ -1,7 +1,13 @@
 # SpeckleBlender
 Speckle for Blender Client
 
-#Update - November 15, 2018
+## Updates
+
+### January 13, 2019
+
+This update adds support for loading local user accounts and logging in with a new account. New logged in accounts will be saved to disk. Loading an account also lists all the available streams for that account.
+
+### November 15, 2018
 
 This update separates the plug-in into a generic Python client which is available through `pip` and a Blender add-on interface. 
 
@@ -28,8 +34,8 @@ The add-on works like a normal Blender add-on:
 ## Usage
 
 Usage is fairly simple, but for now is with a couple caveats:
-1. There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.
-2. SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.
+1. ~~There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.~~
+2. ~~SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.~~
 3. Currently, only Mesh objects are supported. Importing Breps is possible, but will only import their display mesh. Polylines and curves will be introduced soon. Anything else will be ignored. 
 
 **SpeckleBlender** adds some operators:
@@ -52,4 +58,4 @@ Usage is fairly simple, but for now is with a couple caveats:
 - **Import stream** : Triggers the `Speckle - Import Stream` operator.
 
 ## Notes
-SpeckleBlender is written and sort of maintained by [Tom Svilans](http://tomsvilans.com) ([Github](https://github.com/tsvilans)).
+SpeckleBlender is written and maintained by [Tom Svilans](http://tomsvilans.com) ([Github](https://github.com/tsvilans)).
