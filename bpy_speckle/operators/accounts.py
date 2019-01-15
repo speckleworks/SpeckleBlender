@@ -21,10 +21,10 @@ class SpeckleLoadAccounts(bpy.types.Operator):
         for p in profiles:
             #print(p)
             ua = context.scene.speckle.accounts.add()
-            ua.name = p["server_name"]
-            ua.server=p["server"] 
+            ua.name = p['server_name']
+            ua.server=p['server'] 
             ua.email=p['email']
-            ua.authToken = p["authtoken"]
+            ua.authToken = p['apitoken']
 
             client.server = ua.server
             client.session.headers.update({'Authorization': ua.authToken})
@@ -63,12 +63,14 @@ class SpeckleAddAccount(bpy.types.Operator):
             print("Failed to login to server '%s' with email '%s'" % (self.server, self.email))
             return {'CANCELLED'}
 
-        #print(res['resource'])
+        user = res['resource']
 
-        res['resource']['server'] = self.server
-        res['resource']['server_name'] = "SpeckleServer" #TODO: Find way to get official server name
+        #print(user)
 
-        client.write_profile_to_database(res['resource'])
+        user['server'] = self.server
+        user['server_name'] = "SpeckleServer" #TODO: Find way to get official server name
+
+        client.write_profile_to_database(user)
 
         bpy.ops.scene.speckle_accounts_load()
 
