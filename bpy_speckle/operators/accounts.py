@@ -16,15 +16,15 @@ class SpeckleLoadAccounts(bpy.types.Operator):
 
         client = SpeckleApiClient()
  
-        profiles = client.load_local_profiles(None)
+        profiles = client.load_local_profiles_from_database(None)
 
-        for p in list(profiles):
-            print(profiles[p])
+        for p in profiles:
+            #print(p)
             ua = context.scene.speckle.accounts.add()
-            ua.name = profiles[p]["server_name"]
-            ua.server=profiles[p]["server"] 
-            ua.email=p
-            ua.authToken = profiles[p]["authtoken"]
+            ua.name = p["server_name"]
+            ua.server=p["server"] 
+            ua.email=p['email']
+            ua.authToken = p["authtoken"]
 
             client.server = ua.server
             client.session.headers.update({'Authorization': ua.authToken})
@@ -36,7 +36,7 @@ class SpeckleLoadAccounts(bpy.types.Operator):
                 stream = ua.streams.add()
                 stream.name = s['name']
                 stream.streamId = s['streamId']
-                print (stream.name)
+                #print (stream.name)
 
         return {'FINISHED'}
 
@@ -63,12 +63,12 @@ class SpeckleAddAccount(bpy.types.Operator):
             print("Failed to login to server '%s' with email '%s'" % (self.server, self.email))
             return {'CANCELLED'}
 
-        print(res['resource'])
+        #print(res['resource'])
 
         res['resource']['server'] = self.server
         res['resource']['server_name'] = "SpeckleServer" #TODO: Find way to get official server name
 
-        client.write_profile_to_file(res['resource'])
+        client.write_profile_to_database(res['resource'])
 
         bpy.ops.scene.speckle_accounts_load()
 

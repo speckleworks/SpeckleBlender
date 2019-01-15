@@ -12,7 +12,7 @@ class SpeckleViewStreamDataApi(bpy.types.Operator):
     bl_idname = "scene.speckle_view_stream_data_api"
     bl_label = "Speckle - View Stream Data (API)"
     bl_options = {'REGISTER', 'UNDO'}
-
+    '''
     available_streams = EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
@@ -36,24 +36,24 @@ class SpeckleViewStreamDataApi(bpy.types.Operator):
         context.scene['speckle_streams'] = stream_ids
 
         return wm.invoke_props_dialog(self)    
-
+    '''
     def execute(self, context):
-        if self.available_streams == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
 
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
+        if len(context.scene.speckle.accounts) > 0:
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+            if len(account.streams) > 0:
+                stream =account.streams[account.active_stream]         
 
-        webbrowser.open('%s/streams/%s' % (context.scene.speckle_client.baseUrl, self.available_streams), new=2)
-        return {'FINISHED'}
+                webbrowser.open('%s/streams/%s' % (account.server, stream.streamId), new=2)
+                return {'FINISHED'}
+        return {'CANCELLED'}
 
 class SpeckleViewStreamObjectsApi(bpy.types.Operator):
     bl_idname = "scene.speckle_view_stream_objects_api"
     bl_label = "Speckle - View Stream Objects (API)"
     bl_options = {'REGISTER', 'UNDO'}
 
+    '''
     available_streams = EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
@@ -77,18 +77,16 @@ class SpeckleViewStreamObjectsApi(bpy.types.Operator):
         context.scene['speckle_streams'] = stream_ids
 
         return wm.invoke_props_dialog(self)    
-
+    '''
     def execute(self, context):
-        if self.available_streams == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
+        if len(context.scene.speckle.accounts) > 0:
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+            if len(account.streams) > 0:
+                stream =account.streams[account.active_stream]         
 
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
-
-        webbrowser.open('%s/streams/%s/objects?omit=displayValue,base64' % (context.scene.speckle_client.baseUrl, self.available_streams), new=2)
-        return {'FINISHED'}
+                webbrowser.open('%s/streams/%s/objects?omit=displayValue,base64' % (account.server, stream.streamId), new=2)
+                return {'FINISHED'}
+        return {'CANCELLED'}
 
 class SpeckleDeleteStream(bpy.types.Operator):
     bl_idname = "scene.speckle_delete_stream"

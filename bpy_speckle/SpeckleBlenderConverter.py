@@ -185,6 +185,8 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     sm['_id'] = obj.speckle.object_id
     sm['geometryHash'] = SetGeometryHash(str(sm))[:12]
     sm['hash'] = SetGeometryHash(str(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
+    sm['type'] = 'Mesh'
+    sm['colors'] = []
 
     return sm
 

@@ -16,9 +16,12 @@ class SpeckleUpdateObject(bpy.types.Operator):
     client = None
 
     def execute(self, context):
-        profiles = context.scene.speckle_client.load_local_profiles()
-        if len(profiles) < 1: raise ValueError('No profiles found.')
-        context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
+        client = context.scene.speckle_client
+        account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+        stream =account.streams[account.active_stream]
+
+        client.server = account.server
+        client.session.headers.update({'Authorization': account.authToken})   
 
         '''
         # This is the easy way, but it seems that we need to delete the existing object
@@ -39,21 +42,28 @@ class SpeckleUpdateObject(bpy.types.Operator):
         active = context.active_object
         if active is not None:
             if active.speckle.enabled:
-                if active.speckle.send_or_receive == "send":
+                if active.speckle.send_or_receive == "send" and active.speckle.stream_id:
                     sm = MeshObject_to_SpeckleMesh(active, 1 / context.scene.speckle.scale)
 
-                    res = context.scene.speckle_client.ObjectCreateAsync(sm)
-                    new_id = res.resources[0]._id
+                    res = client.ObjectCreateAsync([sm])
+                    new_id = res['resources'][0]['_id']
 
-                    res = context.scene.speckle_client.StreamGetAsync(active.speckle.stream_id)
-                    for o in res.resource.objects:
-                        if o._id == active.speckle.object_id:
-                            o._id = new_id
+                    res = client.StreamGetAsync(active.speckle.stream_id)
+                    if res is None:
+                        print ("Getting stream failed.")
+                        return {'CANCELLED'}
+
+                    stream = res['resource']
+
+                    for o in stream['objects']:
+                        if o['_id'] == active.speckle.object_id:
+                            o['_id'] = new_id
                             break
 
-                    res = context.scene.speckle_client.StreamUpdateAsync({"objects":res.resource.objects}, active.speckle.stream_id)
-                    res = context.scene.speckle_client.ObjectDeleteAsync(active.speckle.object_id)
+                    res = client.StreamUpdateAsync(active.speckle.stream_id, {'objects': stream['objects']})
+                    res = client.ObjectDeleteAsync(active.speckle.object_id)
                     active.speckle.object_id = new_id
+
                     if res == None: return {'CANCELLED'}
             return {'FINISHED'}
         return {'CANCELLED'}            
@@ -111,12 +121,15 @@ class SpeckleUploadObject(bpy.types.Operator):
     bl_label = "Speckle - Upload Object"
     bl_options = {'REGISTER', 'UNDO'}
 
+    '''
     available_streams = EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
         items=get_available_streams,
         )
+    '''
 
+    '''
     def draw(self, context):
         layout = self.layout
         row = layout.row()
@@ -133,40 +146,52 @@ class SpeckleUploadObject(bpy.types.Operator):
         context.scene['speckle_streams'] = stream_ids
 
         return wm.invoke_props_dialog(self)
+    '''
 
     def execute(self, context):
-
+        '''
         if self.available_streams == "":
             print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}         
+            return {'FINISHED'} 
+        '''        
 
         active = context.active_object
         if active is not None:
             # If active object is mesh
             sm = MeshObject_to_SpeckleMesh(active, 1 / context.scene.speckle.scale)
 
-            res = context.scene.speckle_client.ObjectCreateAsync([sm])
+            del sm['transform']
+            del sm['properties']
+
+            client = context.scene.speckle_client
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+            stream =account.streams[account.active_stream]
+
+            client.server = account.server
+            client.session.headers.update({'Authorization': account.authToken})   
+
+            print(stream.name + "    " + stream.streamId)         
+
+            print("Creating object...")
+            res = client.ObjectCreateAsync([sm])
             if res == None: return {'CANCELLED'}
 
-            sm._id = res.resources[0]._id
-            pl = {'type':'Placeholder', '_id':res.resources[0]._id}
+            sm['_id'] = res['resources'][0]['_id']
+            pl = {'type':'Placeholder', '_id':res['resources'][0]['_id']}
 
             # Get list of existing objects in stream and append new object to list
-            res = context.scene.speckle_client.StreamGetAsync(self.available_streams)
+            print("Fetching stream...")            
+            res = client.StreamGetAsync(stream.streamId)
             if res is None: return {'CANCELLED'}
-
-            #stream_name = res.resource.name
-            stream_name = self.available_streams
 
             objects = [x for x in res['resource']['objects']]
             N_current = len(objects)
             objects.append(pl)
 
-            res = context.scene.speckle_client.StreamGetAsync(self.available_streams, "fields=layers")
+            '''
+            res = client.StreamGetAsync(stream.streamId, "fields=layers")
             if res is None: return {'CANCELLED'}
-            #print (res)
-
-            #print(SpeckleResource.to_json_pretty(res))
+            '''
 
             layers = res['resource']['layers']
             new_layers = []
@@ -186,20 +211,23 @@ class SpeckleUploadObject(bpy.types.Operator):
                 new_layers[-1]['objectCount'] = N + 1
                 new_layers[-1]['topology'] = "0-%s" % (N + 1)
 
-            stream = {}
-            stream['objects'] = objects
-            stream['layers'] = new_layers
+            streamUpdate = {}
+            streamUpdate['objects'] = objects
+            streamUpdate['layers'] = new_layers
 
-            print("Updating: %s" % self.available_streams)
-            print(speckle.jdumps(stream))
-            res = context.scene.speckle_client.StreamUpdateAsync(stream, self.available_streams)
+            print("Updating: %s" % stream.streamId)
+            #print(speckle.jdumps(streamUpdate))
+
+            print("Updating stream...")
+            res = client.StreamUpdateAsync(stream.streamId, streamUpdate)
 
             active.speckle.enabled = True
-            active.speckle.object_id = sm._id
-            active.speckle.stream_id = self.available_streams
+            active.speckle.object_id = sm['_id']
+            active.speckle.stream_id = stream.streamId
             active.speckle.send_or_receive = 'receive'
 
             context.scene.update()
+            print("Done.")
 
         return {'FINISHED'}    
 
