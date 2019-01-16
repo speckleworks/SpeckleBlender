@@ -7,6 +7,7 @@ class SpeckleSceneObject(bpy.types.PropertyGroup):
 class SpeckleStreamObject(bpy.types.PropertyGroup):
     name = StringProperty(default="SpeckleStream")
     streamId = StringProperty(default="")
+    units = StringProperty(default="Meters")
 
 class SpeckleUserAccountObject(bpy.types.PropertyGroup):
     name = StringProperty(default="SpeckleUser")

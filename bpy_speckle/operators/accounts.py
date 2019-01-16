@@ -36,7 +36,10 @@ class SpeckleLoadAccounts(bpy.types.Operator):
                 stream = ua.streams.add()
                 stream.name = s['name']
                 stream.streamId = s['streamId']
-                #print (stream.name)
+                if 'baseProperties' in s.keys() and s['baseProperties'] is not None:
+                    #print (s['baseProperties'])
+                    if 'units' in s['baseProperties'].keys():
+                        stream.units = s['baseProperties']['units']
 
         return {'FINISHED'}
 
@@ -86,7 +89,26 @@ class SpeckleAddAccount(bpy.types.Operator):
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_props_dialog(self) 
-        
+
+# TERMPORARY
+
+def get_scale_length(text):
+    if text is 'Meters':
+        return 1.0
+    elif text is 'Centimeters':
+        return 0.01
+    elif text is 'Millimeters':
+        return 0.001
+    elif text is 'Inches':
+        return 0.0254
+    elif text is 'Feet':
+        return 0.3048
+    elif text is 'Kilometers':
+        return 1000.0
+    else:
+        return 1.0
+
+
 class SpeckleImportStream2(bpy.types.Operator):
     bl_idname = "scene.speckle_import_stream2"
     bl_label = "Speckle - Import Stream"
@@ -101,7 +123,10 @@ class SpeckleImportStream2(bpy.types.Operator):
 
         client = context.scene.speckle_client
         account = context.scene.speckle.accounts[context.scene.speckle.active_account]
-        stream =account.streams[account.active_stream]
+        stream = account.streams[account.active_stream]
+
+        # TODO: Implement scaling properly
+        scale = context.scene.unit_settings.scale_length / get_scale_length(stream.units)
         
         client.server = account.server
         client.session.headers.update({'Authorization': account.authToken})
@@ -111,7 +136,7 @@ class SpeckleImportStream2(bpy.types.Operator):
 
         if 'resources' in res.keys():
             for resource in res['resources']:
-                o = Speckle_to_Blender(resource, context.scene.speckle.scale)
+                o = Speckle_to_Blender(resource, scale)
 
                 if o is None:
                     continue

@@ -81,6 +81,8 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
             if len(account.streams) > 0:
                 account.active_stream = min(account.active_stream, len(account.streams) - 1)
                 col.label("Active stream: %s" % account.streams[account.active_stream].name)
+                col.label("Stream ID: %s" % account.streams[account.active_stream].streamId)
+                col.label("Units: %s" % account.streams[account.active_stream].units)
 
 
         col.label("View")
