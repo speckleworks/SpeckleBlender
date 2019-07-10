@@ -21,7 +21,7 @@ class SpeckleUpdateObject(bpy.types.Operator):
         stream =account.streams[account.active_stream]
 
         client.server = account.server
-        client.session.headers.update({'Authorization': account.authToken})   
+        client.s.headers.update({'Authorization': account.authToken})   
 
         '''
         # This is the easy way, but it seems that we need to delete the existing object
@@ -168,7 +168,7 @@ class SpeckleUploadObject(bpy.types.Operator):
             stream =account.streams[account.active_stream]
 
             client.server = account.server
-            client.session.headers.update({'Authorization': account.authToken})   
+            client.s.headers.update({'Authorization': account.authToken})   
 
             print(stream.name + "    " + stream.streamId)         
 

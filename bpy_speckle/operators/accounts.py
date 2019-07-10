@@ -30,7 +30,7 @@ class SpeckleLoadAccounts(bpy.types.Operator):
             ua.authToken = p['apitoken']
 
             client.server = ua.server
-            client.session.headers.update({'Authorization': ua.authToken})
+            client.s.headers.update({'Authorization': ua.authToken})
 
             res = client.StreamsGetAllAsync()
             streams = sorted(res['resources'], key=lambda x: x['name'], reverse=False)
@@ -54,11 +54,11 @@ class SpeckleAddAccount(bpy.types.Operator):
 
     email: StringProperty(name="Email", description="User email.", default="")
     pwd: StringProperty(name="Password", description="User password.", default="")
-    server: StringProperty(name="Server", description="Server address.", default="https://hestia.speckle.works/api/v1")
+    host: StringProperty(name="Server", description="Server address.", default="https://hestia.speckle.works/api/v1")
 
     def execute(self, context):
 
-        client = SpeckleApiClient()
+        client = context.scene.speckle_client
         client.server = self.server
 
         if self.server is "":
@@ -132,7 +132,7 @@ class SpeckleImportStream2(bpy.types.Operator):
         scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
         
         client.server = account.server
-        client.session.headers.update({'Authorization': account.authToken})
+        client.s.headers.update({'Authorization': account.authToken})
 
         res = context.scene.speckle_client.StreamGetObjectsAsync(stream.streamId)
         if res is None: return {'CANCELLED'}
