@@ -18,6 +18,10 @@ class SpeckleLoadAccounts(bpy.types.Operator):
  
         profiles = client.load_local_profiles_from_database(None)
 
+        # If can't find SpeckleCache.db, try MigratedAccounts
+        if len(profiles) < 1:
+            profiles = client.load_local_profiles(None)
+
         for p in profiles:
             #print(p)
             ua = context.scene.speckle.accounts.add()
