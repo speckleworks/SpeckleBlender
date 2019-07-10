@@ -1,7 +1,13 @@
 # SpeckleBlender
-Speckle for Blender Client
+Speckle add-on for Blender 2.8
 
 ## Updates
+
+### July 10, 2019
+
+Added the `2-80` branch for supporting Blender 2.8. This will eventually replace the master branch, so work on the 2.79 version will probably not continue.
+
+The Speckle UI can be found in the 3d viewport toolbar (N), under the Speckle tab.
 
 ### January 13, 2019
 
@@ -34,28 +40,21 @@ The add-on works like a normal Blender add-on:
 ## Usage
 
 Usage is fairly simple, but for now is with a couple caveats:
-1. ~~There must be an already created profile in your SpeckleSettings folder (`AppData/Local/SpeckleSettings`) with an authentication token. Although it is possible to create a profile and login using the Python client, this is not yet exposed in Blender.~~
-2. ~~SpeckleBlender will take the first profile in this folder. This is hard-coded at the moment, but will change when the login system is properly implemented.~~
-3. Currently, only Mesh objects are supported. Importing Breps is possible, but will only import their display mesh. Polylines and curves will be introduced soon. Anything else will be ignored. 
+1. Currently, only Mesh objects are supported. Importing Breps is possible, but will only import their display mesh. Polylines and curves will be introduced soon. Anything else will be ignored. 
+2. Streams have to be reloaded to see their changes. Automatic refreshing and updates will hopefully be eventually implemented.
 
-**SpeckleBlender** adds some operators:
-- **Speckle - Import Stream** : Choose from a stream in your profile and import all objects from that stream.
-- **Speckle - Create Stream** : Create a Speckle stream.
-- **Speckle - Delete Stream** : Delete a Speckle stream.
-- **Speckle - Update Object** : Updates the selected object if it is enabled for Speckle usage.
-- **Speckle - Update All** : Updates all objects that are enabled for Speckle usage.
-- **Speckle - Upload Object** : Choose from a stream in your profile and upload active object to that stream. This enables the object for Speckle usage and sets its update direction to 'Send'.
+**SpeckleBlender** can be used as follows:
+- In the Speckle.Works panel, press `Add Account` to login with an existing profile. This will save the authentication in the local Speckle user database.
+- Alternatively, press `Load Accounts` to load all local users, either from the database or from the older local profile folder.
+- The `Streams` list should be automatically populated with the available streams for the selected user. 
+- Select a stream and press `Load Stream`. This will load all objects in that stream into a new Collection, identified by the stream ID. 
+- Pressing `View stream data (API)` or `View stream objects (API)` will open the stream in your web browser.
 
-**SpeckleBlender** adds some Object properties:
-- **Enabled** : Enables the object for Speckle usage.
-- **Send/Receive** : Sets the update direction on a per-object level. 'Send' will update the remote object with local data, 'Receive' will replace the local object with remote data.
-- **Stream ID** : Possibly useless. Holds the Stream ID that this object is part of. Meaningless if the object is part of multiple streams.
-- **Object ID** : The ID of the object on the server.
+At the moment, that is about the extent of SpeckleBlender capabilities for Blender 2.8. Adding objects to streams, creating new streams, etc. will slowly be added back in. 
 
-**SpeckleBlender** adds some Scene properties:
-- **Scale** : Scale factor for incoming data. Outgoing data is scaled by `1 / Scale`.
-- **Update all** : Triggers the `Speckle - Update All` operator. Currently non-functional.
-- **Import stream** : Triggers the `Speckle - Import Stream` operator.
+Two useful things:
+- **SpeckleBlender** will look for a `texture_coordinates` property and use that to create a UV layer for the imported object. These texture coordinates are a space-separated list of floats (`[u v u v u v etc...]`) that is encoded as a base64 blob. 
+- If a `material` property is found, **SpeckleBlender** will create a material named using the sub-property `material.name`. If a material with that name already exists in Blender, **SpeckleBlender** will just assign that existing material to the object. This allows geometry to be updated without having to re-assign and re-create materials.
 
 ## Notes
 SpeckleBlender is written and maintained by [Tom Svilans](http://tomsvilans.com) ([Github](https://github.com/tsvilans)).
