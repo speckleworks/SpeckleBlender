@@ -9,6 +9,8 @@ Added the `2-80` branch for supporting Blender 2.8. This will eventually replace
 
 The Speckle UI can be found in the 3d viewport toolbar (N), under the Speckle tab.
 
+Also - importantly - PySpeckle has been undergoing changes and improvements, so these will slowly filter into SpeckleBlender. Take care when installing `speckle` through `pip` - hopefully there won't be any breaking changes anytime soon, but keep that in mind.
+
 ### January 13, 2019
 
 This update adds support for loading local user accounts and logging in with a new account. New logged in accounts will be saved to disk. Loading an account also lists all the available streams for that account.
