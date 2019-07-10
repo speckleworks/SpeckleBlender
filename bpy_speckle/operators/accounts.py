@@ -5,7 +5,6 @@ from bpy_speckle.properties.scene import SpeckleUserAccountObject
 from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 
 from speckle import SpeckleApiClient
-#from speckle import SpeckleResource
 
 class SpeckleLoadAccounts(bpy.types.Operator):
     bl_idname = "scene.speckle_accounts_load"
@@ -14,7 +13,7 @@ class SpeckleLoadAccounts(bpy.types.Operator):
 
     def execute(self, context):
 
-        client = SpeckleApiClient()
+        client = context.scene.speckle_client
  
         profiles = client.load_local_profiles_from_database(None)
 
@@ -53,9 +52,9 @@ class SpeckleAddAccount(bpy.types.Operator):
     bl_label = "Speckle - Add Account"
     bl_options = {'REGISTER', 'UNDO'}
 
-    email = StringProperty(name="Email", description="User email.", default="")
-    pwd = StringProperty(name="Password", description="User password.", default="")
-    server = StringProperty(name="Server", description="Server address.", default="https://hestia.speckle.works/api/v1")
+    email: StringProperty(name="Email", description="User email.", default="")
+    pwd: StringProperty(name="Password", description="User password.", default="")
+    server: StringProperty(name="Server", description="Server address.", default="https://hestia.speckle.works/api/v1")
 
     def execute(self, context):
 
@@ -97,17 +96,17 @@ class SpeckleAddAccount(bpy.types.Operator):
 # TERMPORARY
 
 def get_scale_length(text):
-    if text is 'Meters':
+    if text == 'Meters':
         return 1.0
-    elif text is 'Centimeters':
+    elif text == 'Centimeters':
         return 0.01
-    elif text is 'Millimeters':
+    elif text == 'Millimeters':
         return 0.001
-    elif text is 'Inches':
+    elif text == 'Inches':
         return 0.0254
-    elif text is 'Feet':
+    elif text == 'Feet':
         return 0.3048
-    elif text is 'Kilometers':
+    elif text == 'Kilometers':
         return 1000.0
     else:
         return 1.0
@@ -119,7 +118,7 @@ class SpeckleImportStream2(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}   
 
     def execute(self, context):
-        context.scene.objects.active = None
+        bpy.context.view_layer.objects.active = None
 
         if context.scene.speckle_client is None: 
             print ("SpeckleClient was not initialized...")
@@ -130,13 +129,26 @@ class SpeckleImportStream2(bpy.types.Operator):
         stream = account.streams[account.active_stream]
 
         # TODO: Implement scaling properly
-        scale = context.scene.unit_settings.scale_length / get_scale_length(stream.units)
+        scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
         
         client.server = account.server
         client.session.headers.update({'Authorization': account.authToken})
 
         res = context.scene.speckle_client.StreamGetObjectsAsync(stream.streamId)
         if res is None: return {'CANCELLED'}
+
+        name = "SpeckleStream_{}_{}".format(stream.name, stream.streamId)
+
+        if name in bpy.data.collections:
+            col = bpy.data.collections[name]
+        else:
+            col = bpy.data.collections.new(name)
+
+        col["speckle"] = {}
+        col["speckle"]["streamId"] = stream.streamId
+        col["speckle"]["name"] = stream.name
+        col["speckle"]["units"] = stream.units
+
 
         if 'resources' in res.keys():
             for resource in res['resources']:
@@ -147,13 +159,18 @@ class SpeckleImportStream2(bpy.types.Operator):
 
                 o.speckle.stream_id = stream.streamId
                 o.speckle.send_or_receive = 'receive'
-                o.select = True
-                bpy.context.scene.objects.link(o)
+
+                col.objects.link(o)
+
+                #o.select_set(True)
+                #bpy.context.scene.objects.link(o)
 
         else:
-            #print(SpeckleResource.to_json_pretty(res))
             pass
 
-        context.scene.update()
+        if col.name not in bpy.context.scene.collection.children:
+            bpy.context.scene.collection.children.link(col)
+
+        bpy.context.view_layer.update()
         #print ("Received %i objects." % len(res.resources))
         return {'FINISHED'}

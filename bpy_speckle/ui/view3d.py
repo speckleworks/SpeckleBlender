@@ -1,7 +1,10 @@
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-#from speckle import SpeckleAddon
+if bpy.app.version < (2,80,0):
+    Region = "TOOLS"
+else:
+    Region = "UI"
 
 def menu_func(self, context):
     self.layout.operator(SpeckleUpdateObject.bl_idname, icon='MESH_CUBE')
@@ -43,7 +46,7 @@ class VIEW3D_UL_SpeckleStreams(bpy.types.UIList):
 class VIEW3D_PT_speckle(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = Region
     bl_category = 'Speckle'
     bl_context = "objectmode"
     bl_label = "Speckle.Works"
@@ -56,22 +59,22 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
 
         layout = self.layout
         col = layout.column()
-        col.operator("scene.speckle_update", text='Update scene')
-        col.label("Streams")
-        col.operator("scene.speckle_import_stream", text='Import stream')
-        col.operator("scene.speckle_delete_stream", text='Delete stream')
-        col.operator("scene.speckle_select_stream", text='Select stream')
-        col.operator("scene.speckle_select_orphans", text='Select orphans')
-        col.operator("scene.speckle_not_implemented", text='Create stream')
+        #col.operator("scene.speckle_update", text='Update scene')
+        #col.label(text="Streams")
+        #col.operator("scene.speckle_import_stream", text='Import stream')
+        #col.operator("scene.speckle_delete_stream", text='Delete stream')
+        #col.operator("scene.speckle_select_stream", text='Select stream')
+        #col.operator("scene.speckle_select_orphans", text='Select orphans')
+        #col.operator("scene.speckle_not_implemented", text='Create stream')
 
-        col.label("Accounts")
+        col.label(text="Accounts")
         if len(speckle.accounts) > 0:
-            col.label("Current user: %s" % speckle.accounts[speckle.active_account].name)
+            col.label(text="Current user: %s" % speckle.accounts[speckle.active_account].name)
 
         col.operator("scene.speckle_account_add", text="Add Account")
         col.operator("scene.speckle_accounts_load", text="Load Accounts")
         col.template_list("VIEW3D_UL_SpeckleAccounts", "", speckle, "accounts", speckle, "active_account")
-        col.label("Streams")
+        col.label(text="Streams")
         
         if len(speckle.accounts) > 0:
             speckle.active_account = min(speckle.active_account, len(speckle.accounts) - 1)
@@ -80,11 +83,11 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
             col.operator("scene.speckle_import_stream2", text="Load Stream")
             if len(account.streams) > 0:
                 account.active_stream = min(account.active_stream, len(account.streams) - 1)
-                col.label("Active stream: %s" % account.streams[account.active_stream].name)
-                col.label("Stream ID: %s" % account.streams[account.active_stream].streamId)
-                col.label("Units: %s" % account.streams[account.active_stream].units)
+                col.label(text="Active stream: %s" % account.streams[account.active_stream].name)
+                col.label(text="Stream ID: %s" % account.streams[account.active_stream].streamId)
+                col.label(text="Units: %s" % account.streams[account.active_stream].units)
 
 
-        col.label("View")
+        col.label(text="View")
         col.operator("scene.speckle_view_stream_data_api", text='View stream data (API)')
         col.operator("scene.speckle_view_stream_objects_api", text='View stream objects (API)')

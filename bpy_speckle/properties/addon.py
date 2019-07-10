@@ -13,7 +13,7 @@ class SpeckleAddonPreferences(bpy.types.AddonPreferences):
     #bl_idname = __name__
     bl_idname = __package__
 
-    verbose_client = BoolProperty(
+    verbose_client: BoolProperty(
             name="Verbose client",
             default=False,
             description="Sets SpeckleClient to output more verbose messages and outputs all responses to console.",

@@ -93,13 +93,13 @@ class SpeckleDeleteStream(bpy.types.Operator):
     bl_label = "Speckle - Delete Stream"
     bl_options = {'REGISTER', 'UNDO'}
 
-    available_streams = EnumProperty(
+    available_streams: EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
         items=get_available_streams,
         )
 
-    are_you_sure = BoolProperty(
+    are_you_sure: BoolProperty(
         name="Confirm",
         default=False,
         )
@@ -155,7 +155,7 @@ class SpeckleSelectStream(bpy.types.Operator):
         )
     '''
 
-    available_streams = EnumProperty(
+    available_streams: EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
         items=get_available_streams,
@@ -217,13 +217,13 @@ class SpeckleImportStream(bpy.types.Operator):
     bl_label = "Speckle - Import Stream"
     bl_options = {'REGISTER', 'UNDO'}
 
-    available_streams = EnumProperty(
+    available_streams: EnumProperty(
         name="Available streams",
         description="Available streams associated with account.",
         items=get_available_streams,
         )
 
-    clear_stream = BoolProperty(
+    clear_stream: BoolProperty(
         name="Clear stream",
         description="Delete existing objects that identify with this stream.",
         default=True,
@@ -298,12 +298,12 @@ class SpeckleImportStreamRaw(bpy.types.Operator):
     bl_label = "Speckle - Import Stream Raw"
     bl_options = {'REGISTER', 'UNDO'}
 
-    stream_id = StringProperty(
+    stream_id: StringProperty(
         name="Stream ID",
         description="Manually input stream ID.",
         )
 
-    clear_stream = BoolProperty(
+    clear_stream: BoolProperty(
         name="Clear stream",
         description="Delete existing objects that identify with this stream.",
         default=True,

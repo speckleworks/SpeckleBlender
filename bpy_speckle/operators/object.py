@@ -236,7 +236,7 @@ class SpeckleUploadObjectRaw(bpy.types.Operator):
     bl_label = "Speckle - Upload Object Raw"
     bl_options = {'REGISTER', 'UNDO'}
 
-    stream_id = StringProperty(
+    stream_id: StringProperty(
         name="Stream ID",
         description="Manually input stream ID.",
         )

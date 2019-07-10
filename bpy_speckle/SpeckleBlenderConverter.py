@@ -15,40 +15,63 @@ def SpeckleMesh_to_Lists(o):
     faces = []
     uv = []
 
-    if 'properties' in o.keys() and o['properties'] is not None and 'texture_coordinates' in o['properties'].keys():
-    #if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
-        try:
-            decoded = base64.b64decode(o['properties']['texture_coordinates']).decode("utf-8")
-            s_uvs = decoded.split()
-              
-            if int(len(s_uvs) / 2) == int(len(o['vertices']) / 3):
-                for i in range(0, len(s_uvs), 2):
-                    uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
-            else:
-                print (len(s_uvs) * 2)
-                print (len(o['vertices']) /3)
-                print ("Failed to match UV coordinates to vert data.")
-        except:
-            pass
-    
-    if 'vertices' in o.keys() and len(o['vertices']) > 0:
-        for i in range(0, len(o['vertices']), 3):
-            verts.append((float(o['vertices'][i]), float(o['vertices'][i + 1]), float(o['vertices'][i + 2])))
+    # Parse vertices
+    vertKey = ""
+    if 'vertices' in o.keys():
+        vertKey = 'vertices'
+    elif 'Vertices' in o.keys():
+        vertKey = 'Vertices'
 
-    if 'faces' in o.keys() and len(o['faces']) > 0:
+    if vertKey != "" and len(o[vertKey]) > 0:
+        for i in range(0, len(o[vertKey]), 3):
+            verts.append((float(o[vertKey][i]), float(o[vertKey][i + 1]), float(o[vertKey][i + 2])))
+
+    # Parse faces
+    faceKey = ""
+    if 'faces' in o.keys():
+        faceKey = 'faces'
+    elif 'Faces' in o.keys():
+        faceKey = 'Faces'
+
+    if faceKey != "" and len(o[faceKey]) > 0:
         i = 0
-        while (i < len(o['faces'])):
-            if (o['faces'][i] == 0):
+        while (i < len(o[faceKey])):
+            if (o[faceKey][i] == 0):
                 i += 1
-                faces.append((int(o['faces'][i]), int(o['faces'][i + 1]), int(o['faces'][i + 2])))
+                faces.append((int(o[faceKey][i]), int(o[faceKey][i + 1]), int(o[faceKey][i + 2])))
                 i += 3
-            elif (o['faces'][i] == 1):
+            elif (o[faceKey][i] == 1):
                 i += 1
-                faces.append((int(o['faces'][i]), int(o['faces'][i + 1]), int(o['faces'][i + 2]), int(o['faces'][i + 3])))
+                faces.append((int(o[faceKey][i]), int(o[faceKey][i + 1]), int(o[faceKey][i + 2]), int(o[faceKey][i + 3])))
                 i += 4
             else:
-                print("Invalid face length.\n" + str(o['faces'][i]))
+                print("Invalid face length.\n" + str(o[faceKey][i]))
                 return
+
+    # Parse texture coordinates
+    if 'properties' in o.keys() and o['properties'] is not None:
+        texKey = ""
+        if 'texture_coordinates' in o['properties'].keys():
+            texKey = 'texture_coordinates'
+        elif 'TextureCoordinates' in o['properties'].keys():
+            texKey = "TextureCoordinates"
+
+        if texKey != "":
+
+        #if hasattr(o, 'properties') and o.properties is not None and hasattr(o.properties, 'texture_coordinates'):
+            try:
+                decoded = base64.b64decode(o['properties'][texKey]).decode("utf-8")
+                s_uvs = decoded.split()
+                  
+                if int(len(s_uvs) / 2) == int(len(o[vertKey]) / 3):
+                    for i in range(0, len(s_uvs), 2):
+                        uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
+                else:
+                    print (len(s_uvs) * 2)
+                    print (len(o[vertKey]) /3)
+                    print ("Failed to match UV coordinates to vert data.")
+            except:
+                pass                
 
     return verts, faces, uv
 
@@ -77,6 +100,7 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
     bm.verts.index_update()
            
     # Make UVs
+    '''
     if len(uv) == len(verts):
         uv_layer = bm.loops.layers.uv.verify()
         bm.faces.layers.tex.verify()
@@ -85,7 +109,7 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
             for l in f.loops:
                 luv = l[uv_layer]
                 luv.uv = uv[l.vert.index]
-
+    '''
 
     bm.to_mesh(mesh)
     bm.free()
@@ -96,7 +120,11 @@ def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
     if smesh['name'] is None or smesh['name'] == "":
         smesh['name'] = "SpeckleMesh"
     verts, faces, uv = SpeckleMesh_to_Lists(smesh)
-    mesh = Lists_to_Mesh(verts, faces, uv, smesh['geometryHash'], scale)
+
+    if 'geometryHash' in smesh:
+        mesh = Lists_to_Mesh(verts, faces, uv, smesh['geometryHash'], scale)
+    else:
+        mesh = Lists_to_Mesh(verts, faces, uv, smesh['_id'], scale)
 
     obj = bpy.data.objects.new(smesh['name'], mesh)
     obj.speckle.object_id = smesh['_id']
@@ -208,14 +236,21 @@ def Speckle_to_Blender(obj, scale=1.0):
         print("bpySpeckle: Placeholder found. Try to get the actual object.")
     elif obj['type'] == "Brep":
         # transfer name and properties to displayValue
-        obj['displayValue']['name'] = obj['name']
-        obj['displayValue']['_id'] = obj['_id']
-        obj['displayValue']['properties'] = obj['properties']
-        #setattr(obj.displayValue, 'name', obj.name)
-        #setattr(obj.displayValue, '_id', obj._id)
-        #setattr(obj.displayValue, 'properties', obj.properties)
+        if 'displayValue' in obj:
+            dv = 'displayValue'
+        elif 'DisplayValue' in obj:
+            dv = 'DisplayValue'
+        else:
+            returnNone
 
-        return SpeckleMesh_to_MeshObject(obj['displayValue'], scale)
+        obj[dv]['name'] = obj['name']
+        obj[dv]['_id'] = obj['_id']
+        obj[dv]['properties'] = obj['properties']
+            #setattr(obj.displayValue, 'name', obj.name)
+            #setattr(obj.displayValue, '_id', obj._id)
+            #setattr(obj.displayValue, 'properties', obj.properties)
+
+        return SpeckleMesh_to_MeshObject(obj[dv], scale)
 
     return None  
 
