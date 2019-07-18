@@ -1,6 +1,7 @@
 import bpy, bmesh
 import base64, hashlib
 from time import strftime, gmtime
+import struct
 
 #from speckle import SpeckleResource
 
@@ -13,6 +14,7 @@ def SpeckleMesh_to_Lists(o):
     #assert SpeckleResource.isSpeckleMesh(o);
     verts = []
     faces = []
+    colors = []
     uv = []
 
     # Parse vertices
@@ -25,6 +27,20 @@ def SpeckleMesh_to_Lists(o):
     if vertKey != "" and len(o[vertKey]) > 0:
         for i in range(0, len(o[vertKey]), 3):
             verts.append((float(o[vertKey][i]), float(o[vertKey][i + 1]), float(o[vertKey][i + 2])))
+
+    # Parse vertex colors
+    vertKey = ""
+    if 'colors' in o.keys():
+        vertKey = 'colors'
+    elif 'Colors' in o.keys():
+        vertKey = 'Colors'
+
+    if vertKey != "" and len(o[vertKey]) > 0:
+        for i in range(0, len(o[vertKey])):
+            col = int(o[vertKey][i])
+            (a, r, g, b) = [int(x) for x in struct.unpack("!BBBB", struct.pack("!i", col))]
+
+            colors.append((float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0))           
 
     # Parse faces
     faceKey = ""
@@ -73,9 +89,9 @@ def SpeckleMesh_to_Lists(o):
             except:
                 pass                
 
-    return verts, faces, uv
+    return verts, faces, uv, colors
 
-def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
+def Lists_to_Mesh(verts, faces, uv, colors, name, scale=1.0):
 
     if name is None or name=="":
         name = "SpeckleMesh"
@@ -111,6 +127,15 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
                 luv.uv = uv[l.vert.index]
     '''
 
+    # Make vertex colors
+    if len(colors) == len(verts):
+        color_layer = bm.loops.layers.color.new("Col")
+
+        for face in bm.faces:
+            for loop in face.loops:
+                loop[color_layer] = colors[loop.vert.index]
+
+
     bm.to_mesh(mesh)
     bm.free()
 
@@ -119,12 +144,12 @@ def Lists_to_Mesh(verts, faces, uv, name, scale=1.0):
 def SpeckleMesh_to_MeshObject(smesh, scale=1.0):
     if smesh['name'] is None or smesh['name'] == "":
         smesh['name'] = "SpeckleMesh"
-    verts, faces, uv = SpeckleMesh_to_Lists(smesh)
+    verts, faces, uv, colors = SpeckleMesh_to_Lists(smesh)
 
     if 'geometryHash' in smesh:
-        mesh = Lists_to_Mesh(verts, faces, uv, smesh['geometryHash'], scale)
+        mesh = Lists_to_Mesh(verts, faces, uv, colors, smesh['geometryHash'], scale)
     else:
-        mesh = Lists_to_Mesh(verts, faces, uv, smesh['_id'], scale)
+        mesh = Lists_to_Mesh(verts, faces, uv, colors, smesh['_id'], scale)
 
     obj = bpy.data.objects.new(smesh['name'], mesh)
     obj.speckle.object_id = smesh['_id']
