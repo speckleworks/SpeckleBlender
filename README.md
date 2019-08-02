@@ -3,6 +3,12 @@ Speckle add-on for Blender 2.8
 
 ## Updates
 
+### August 2, 2019
+
+Important update: `SpeckleBlender` now checks for the `speckle` dependency and installs it if necessary, using `pip`. If `pip` is not found, it tries installing that too. This should make installing / setup easier. 
+
+Database updating / loading should work better now too. Logging in works, and a user database is created if none exists, with some uniqueness constraints. This prevents duplicate user accounts from appearing in the account list.
+
 ### July 10, 2019
 
 Added the `2-80` branch for supporting Blender 2.8. This will eventually replace the master branch, so work on the 2.79 version will probably not continue.
