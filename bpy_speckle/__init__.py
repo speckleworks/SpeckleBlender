@@ -156,7 +156,7 @@ def register():
     #from . properties.object import SpeckleObjectSettings
     bpy.types.Object.speckle = bpy.props.PointerProperty(type=SpeckleObjectSettings)
 
-    bpy.types.Scene.speckle_client = SpeckleApiClient(verbose=False)
+    bpy.types.Scene.speckle_client = SpeckleApiClient()
 
     handler = bpy.types.SpaceView3D.draw_handler_add(draw_speckle_info, (None, None), 'WINDOW', 'POST_PIXEL')
 
