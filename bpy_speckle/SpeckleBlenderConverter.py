@@ -110,7 +110,8 @@ def Lists_to_Mesh(verts, faces, uv, colors, name, scale=1.0):
 
     # Make faces
     for f in faces:
-            bm.faces.new([bm.verts[x] for x in f])
+        bf = bm.faces.new([bm.verts[x] for x in f])
+        #bf.smooth = True
             
     bm.faces.ensure_lookup_table()
     bm.verts.index_update()

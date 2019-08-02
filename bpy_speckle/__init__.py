@@ -44,8 +44,7 @@ from bpy.types import Operator
 try:
     import speckle
 except:
-    print("Failed to load PySpeckle.")
-    print("Attempting to install using pip...")
+    print("Attempting to install PySpeckle using pip...")
     try:
         try:
             import pip
@@ -56,10 +55,8 @@ except:
             #res = call("{} -m pip install --upgrade pip==9.0.3".format(bpy.app.binary_path_python))
 
             if res == 0:
-                print("success.")
                 import pip
             else:
-                print ("failed.")
                 raise Exception("Failed to install pip.")
 
         print("Installing PySpeckle... "),
@@ -71,10 +68,8 @@ except:
 
         res = pipmain(["install", "speckle"])
         if res == 0:
-            print("success.")
             import speckle
         else:
-            print ("failed.")
             raise Exception("Failed to install PySpeckle.")
     except:
         raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
@@ -84,6 +79,7 @@ from speckle import SpeckleApiClient
 from bpy_speckle.ui.view3d import VIEW3D_PT_speckle, VIEW3D_UL_SpeckleAccounts, VIEW3D_UL_SpeckleStreams
 from bpy_speckle.properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
 from bpy_speckle.properties.object import SpeckleObjectSettings
+from bpy_speckle.properties.collection import SpeckleCollectionSettings
 from bpy_speckle.operators.accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2
 from bpy_speckle.operators.object import SpeckleUpdateObject
 from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectStream, SpeckleSelectOrphanObjects
@@ -99,6 +95,7 @@ classes = [
     SpeckleUserAccountObject,
     SpeckleSceneSettings, 
     SpeckleObjectSettings,
+    SpeckleCollectionSettings,
 ]
 
 classes.extend([
@@ -152,6 +149,7 @@ def register():
         register_class(cls)
 
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
+    bpy.types.Collection.speckle = bpy.props.PointerProperty(type=SpeckleCollectionSettings)
 
     #from . properties.object import SpeckleObjectSettings
     bpy.types.Object.speckle = bpy.props.PointerProperty(type=SpeckleObjectSettings)

@@ -240,6 +240,7 @@ class SpeckleImportStream(bpy.types.Operator):
 
         profiles = context.scene.speckle_client.load_local_profiles()
         if len(profiles) < 1: raise ValueError('No profiles found.')
+        
         context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
         context.scene.speckle.user = sorted(profiles.keys())[0]
 
@@ -275,7 +276,7 @@ class SpeckleImportStream(bpy.types.Operator):
             stream = res['resources']
 
             for resource in res['resources']:
-                o = Speckle_to_Blender(resource, context.scene.speckle.scale)
+                o = from_speckle_object(resource, context.scene.speckle.scale)
 
                 if o is None:
                     continue

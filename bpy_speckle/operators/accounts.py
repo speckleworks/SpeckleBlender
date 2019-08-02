@@ -2,6 +2,8 @@ import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 from bpy_speckle.properties.scene import SpeckleUserAccountObject
 
+
+from bpy_speckle.convert import from_speckle_object
 from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 
 from speckle import SpeckleApiClient
@@ -65,15 +67,12 @@ class SpeckleAddAccount(bpy.types.Operator):
         if self.host is "":
             return {'FINISHED'}
 
-        print(self.host)
+        try:
+            client.login(email=self.email, password=self.pwd)
+        except AssertionError as e:
+            print("Login failed.")
+            return {'CANCELLED'}
 
-        #res = client.UserLoginAsync({"email":self.email,"password":self.pwd})
-        client.login(email=self.email, password=self.pwd)
-
-        #if res is None:
-        #    print("Failed to login to server '%s' with email '%s'" % (self.host, self.email))
-        #    return {'CANCELLED'}
-        #user = res['resource']
         
         user = {
             'email': self.email, 
@@ -85,37 +84,25 @@ class SpeckleAddAccount(bpy.types.Operator):
 
         bpy.ops.scene.speckle_accounts_load()
 
-        '''
-        context.scene.speckle.accounts.add(SpeckleUserAccountObject(
-            name="Namerino", 
-            server=self.server, 
-            email=self.email, 
-            authToken = res['resource']['authToken']))
-        '''
         return {'FINISHED'}
 
     def invoke(self, context, event):
         wm = context.window_manager
         return wm.invoke_props_dialog(self) 
 
-# TERMPORARY
+unit_scale = {
+    'Meters':1.0,
+    'Centimeters':0.01,
+    'Millimeters':0.001,
+    'Inches':0.0254,
+    'Feet':0.3048,
+    'Kilometers':1000.0,
+}
 
-def get_scale_length(text):
-    if text == 'Meters':
-        return 1.0
-    elif text == 'Centimeters':
-        return 0.01
-    elif text == 'Millimeters':
-        return 0.001
-    elif text == 'Inches':
-        return 0.0254
-    elif text == 'Feet':
-        return 0.3048
-    elif text == 'Kilometers':
-        return 1000.0
-    else:
-        return 1.0
-
+def get_scale_length(units):
+    if units in unit_scale.keys():
+        return unit_scale[units]
+    return 1.0
 
 class SpeckleImportStream2(bpy.types.Operator):
     bl_idname = "scene.speckle_import_stream2"
@@ -130,10 +117,19 @@ class SpeckleImportStream2(bpy.types.Operator):
             return {'CANCELLED'}
 
         client = context.scene.speckle_client
+
+        if len(context.scene.speckle.accounts) < 1:
+            print("No accounts loaded.")
+            return {'CANCELLED'}
+
         account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+
+        if len(account.streams) < 1:
+            print("Account contains no streams.")
+            return {'CANCELLED'}
+
         stream = account.streams[account.active_stream]
 
-        # TODO: Implement scaling properly
         scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
         
         client.server = account.server
@@ -149,21 +145,32 @@ class SpeckleImportStream2(bpy.types.Operator):
         else:
             col = bpy.data.collections.new(name)
 
-        col["speckle"] = {}
-        col["speckle"]["streamId"] = stream.streamId
-        col["speckle"]["name"] = stream.name
-        col["speckle"]["units"] = stream.units
+        existing = {}
+        for obj in col.objects:
+            if obj.speckle.object_id != "":
+                existing[obj.speckle.object_id] = obj
 
+        col.speckle.stream_id = stream.streamId
+        col.speckle.name = stream.name
+        col.speckle.units = stream.units
 
         if 'resources' in res.keys():
             for resource in res['resources']:
-                o = Speckle_to_Blender(resource, scale)
+                o = from_speckle_object(resource, scale)
 
                 if o is None:
                     continue
 
                 o.speckle.stream_id = stream.streamId
                 o.speckle.send_or_receive = 'receive'
+
+                if o.speckle.object_id in existing.keys():
+                    name = existing[o.speckle.object_id].name
+                    existing[o.speckle.object_id].name = name + "__deleted"
+                    o.name = name
+                    col.objects.unlink(existing[o.speckle.object_id])
+
+
 
                 col.objects.link(o)
 
