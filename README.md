@@ -3,7 +3,7 @@ Speckle add-on for Blender 2.8
 
 ## Updates
 
-### July 10, 2019
+### August 2, 2019
 
 Important update: `SpeckleBlender` now checks for the `speckle` dependency and installs it if necessary, using `pip`. If `pip` is not found, it tries installing that too. This should make installing / setup easier. 
 
