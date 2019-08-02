@@ -47,10 +47,37 @@ except:
     print("Failed to load PySpeckle.")
     print("Attempting to install using pip...")
     try:
-        import pip
-        pip.main(['install', 'speckle'])
+        try:
+            import pip
+        except:
+            from subprocess import call
+            print("Installing pip... "),
+            res = call("{} -m ensurepip".format(bpy.app.binary_path_python))
+            #res = call("{} -m pip install --upgrade pip==9.0.3".format(bpy.app.binary_path_python))
+
+            if res == 0:
+                print("success.")
+                import pip
+            else:
+                print ("failed.")
+                raise Exception("Failed to install pip.")
+
+        print("Installing PySpeckle... "),
+
+        try:
+            from pip import main as pipmain
+        except:
+            from pip._internal import main as pipmain
+
+        res = pipmain(["install", "speckle"])
+        if res == 0:
+            print("success.")
+            import speckle
+        else:
+            print ("failed.")
+            raise Exception("Failed to install PySpeckle.")
     except:
-        raise Exception("Failed to import pip. Please make sure you have pip installed.")
+        raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
 
 from speckle import SpeckleApiClient
 
