@@ -40,6 +40,20 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
+# Try to import PySpeckle and install if necessary using pip
+try:
+    import speckle
+except:
+    print("Failed to load PySpeckle.")
+    print("Attempting to install using pip...")
+    try:
+        import pip
+        pip.main(['install', 'speckle'])
+    except:
+        raise Exception("Failed to import pip. Please make sure you have pip installed.")
+
+from speckle import SpeckleApiClient
+
 from bpy_speckle.ui.view3d import VIEW3D_PT_speckle, VIEW3D_UL_SpeckleAccounts, VIEW3D_UL_SpeckleStreams
 from bpy_speckle.properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
 from bpy_speckle.properties.object import SpeckleObjectSettings
@@ -48,8 +62,6 @@ from bpy_speckle.operators.object import SpeckleUpdateObject
 from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectStream, SpeckleSelectOrphanObjects
 from bpy_speckle.operators.streams import NotImplementedOperator, SpeckleImportStream, SpeckleImportStreamRaw, SpeckleUpdateGlobal
 
-
-from speckle import SpeckleApiClient
 
 classes = [
     VIEW3D_PT_speckle, 
