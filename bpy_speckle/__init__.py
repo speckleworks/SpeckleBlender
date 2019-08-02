@@ -144,7 +144,7 @@ def register():
     
     from bpy.utils import register_class, unregister_class
     for cls in classes:
-        print("class: {} class_name: {}".format(cls, cls.__name__))
+        #print("class: {} class_name: {}".format(cls, cls.__name__))
 
         if hasattr(bpy.types, cls.__name__):
             print("   already registered")
