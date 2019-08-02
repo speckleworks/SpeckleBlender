@@ -14,6 +14,7 @@ class SpeckleLoadAccounts(bpy.types.Operator):
     def execute(self, context):
 
         client = context.scene.speckle_client
+        context.scene.speckle.accounts.clear()
  
         profiles = client.load_local_profiles_from_database(None)
 
