@@ -59,21 +59,24 @@ class SpeckleAddAccount(bpy.types.Operator):
     def execute(self, context):
 
         client = context.scene.speckle_client
-        client.server = self.server
+        client.server = self.host
 
-        if self.server is "":
+        if self.host is "":
             return {'FINISHED'}
 
-        res = client.UserLoginAsync({"email":self.email,"password":self.pwd})
+        print(self.host)
+
+        #res = client.UserLoginAsync({"email":self.email,"password":self.pwd})
+        res = client.login(email=self.email, password=self.pwd)
         if res is None:
-            print("Failed to login to server '%s' with email '%s'" % (self.server, self.email))
+            print("Failed to login to server '%s' with email '%s'" % (self.host, self.email))
             return {'CANCELLED'}
 
         user = res['resource']
 
         #print(user)
 
-        user['server'] = self.server
+        user['server'] = self.host
         user['server_name'] = "SpeckleServer" #TODO: Find way to get official server name
 
         client.write_profile_to_database(user)
