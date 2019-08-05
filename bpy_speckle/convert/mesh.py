@@ -65,13 +65,13 @@ def add_colors(smesh, bmesh):
                 (a, r, g, b) = [int(x) for x in struct.unpack("!BBBB", struct.pack("!i", col))]
                 colors.append((float(r) / 255.0, float(g) / 255.0, float(b) / 255.0, float(a) / 255.0)) 
 
-    # Make vertex colors
-    if len(scolors) == len(bmesh.verts):
-        color_layer = bmesh.loops.layers.color.new("Col")
+        # Make vertex colors
+        if len(scolors) == len(bmesh.verts):
+            color_layer = bmesh.loops.layers.color.new("Col")
 
-        for face in bmesh.faces:
-            for loop in face.loops:
-                loop[color_layer] = colors[loop.vert.index]
+            for face in bmesh.faces:
+                for loop in face.loops:
+                    loop[color_layer] = colors[loop.vert.index]
 
 def add_uv_coords(smesh, bmesh):
 
@@ -99,17 +99,17 @@ def add_uv_coords(smesh, bmesh):
                         print ("Failed to match UV coordinates to vert data.")
                 except:
                     pass
-            '''
-            if len(uv) == len(verts):
-                uv_layer = bm.loops.layers.uv.verify()
-                bm.faces.layers.tex.verify()
-                
-                for f in bm.faces:
-                    for l in f.loops:
-                        luv = l[uv_layer]
-                        luv.uv = uv[l.vert.index]
-            '''
-            del smesh['properties'][texKey]
+                '''
+                if len(uv) == len(verts):
+                    uv_layer = bm.loops.layers.uv.verify()
+                    bm.faces.layers.tex.verify()
+                    
+                    for f in bm.faces:
+                        for l in f.loops:
+                            luv = l[uv_layer]
+                            luv.uv = uv[l.vert.index]
+                '''
+                del smesh['properties'][texKey]
 
 
 def to_bmesh(smesh, name="SpeckleMesh", scale=1.0):
@@ -138,7 +138,11 @@ def import_mesh(speckle_mesh, scale=1.0):
     name = speckle_mesh['_id']
     mesh = to_bmesh(speckle_mesh, name, scale)
 
-    obj = bpy.data.objects.new(speckle_mesh['name'], mesh)
+    if 'name' in speckle_mesh and speckle_mesh['name'] is not None:
+        name = speckle_mesh['name']
+        print("Name is: ", name)
+
+    obj = bpy.data.objects.new(name, mesh)
 
     obj.speckle.object_id = speckle_mesh['_id']
     obj.speckle.enabled = True

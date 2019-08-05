@@ -93,25 +93,57 @@ class SpeckleDeleteStream(bpy.types.Operator):
     bl_label = "Speckle - Delete Stream"
     bl_options = {'REGISTER', 'UNDO'}
 
-    available_streams: EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
-
     are_you_sure: BoolProperty(
         name="Confirm",
         default=False,
         )
 
+    delete_collection: BoolProperty(
+        name="Delete collection",
+        default=False)
+
     def draw(self, context):
         layout = self.layout
         col = layout.column()
-        col.prop(self, "available_streams")
         col.prop(self, "are_you_sure")
+        col.prop(self, "delete_collection")
         
     def invoke(self, context, event):
         wm = context.window_manager
+        if len(context.scene.speckle.accounts) > 0:
+            return wm.invoke_props_dialog(self)   
+
+
+        return {'CANCELLED'} 
+
+    def execute(self, context):
+        if not self.are_you_sure:
+            print ("Deleting stream %s cancelled." % self.available_streams)
+            return {'CANCELLED'}
+        self.are_you_sure = False
+
+        if len(context.scene.speckle.accounts) > 0:
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+
+            client = context.scene.speckle_client
+            client.server = account.server
+            client.s.headers.update({'Authorization': account.authToken})
+
+            if len(account.streams) > 0:
+                stream = account.streams[account.active_stream]
+                res = context.scene.speckle_client.StreamDeleteAsync(stream.streamId)
+                print(res['message'])
+
+                if self.delete_collection:
+                    col_name = "SpeckleStream_{}_{}".format(stream.name, stream.streamId)
+                    if col_name in bpy.data.collections:
+                        collection = bpy.data.collections[col_name]
+                        bpy.data.collections.remove(collection)
+
+                bpy.ops.scene.speckle_load_account_streams()
+
+                return {'FINISHED'}
+        return {'CANCELLED'}
 
         profiles = context.scene.speckle_client.load_local_profiles()
         if len(profiles) < 1: raise ValueError('No profiles found.')
@@ -120,27 +152,6 @@ class SpeckleDeleteStream(bpy.types.Operator):
 
         stream_ids = GetAvailableStreams(context.scene.speckle_client)
         context.scene['speckle_streams'] = stream_ids
-
-        return wm.invoke_props_dialog(self)    
-
-    def execute(self, context):
-        if not self.are_you_sure:
-            print ("Deleting stream %s cancelled." % self.available_streams)
-            return {'CANCELLED'}
-        self.are_you_sure = False
-
-        if self.available_streams == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
-
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
-
-        print ("Deleting %s..." % self.available_streams)
-        res = context.scene.speckle_client.StreamDeleteAsync(self.available_streams)
-        if res is None: return {'CANCELLED'}
-        return {'FINISHED'}
 
 class SpeckleSelectStream(bpy.types.Operator):
     bl_idname = "scene.speckle_select_stream"

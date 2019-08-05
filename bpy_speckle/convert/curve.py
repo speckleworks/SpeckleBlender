@@ -18,14 +18,40 @@ def import_polyline(scurve, bcurve, scale):
 
     if "value" in scurve.keys():
         value = scurve["value"]
+        N = int(len(value) / 3)
 
         polyline = bcurve.splines.new('POLY')
 
-        polyline.points.add(int(len(value / 3)) - 1)
-        for i in range(0, len(value), 3):
-            polyline.points[i] = (float(value[i]) * scale, float(value[i + 1]) * scale, float(value[i + 2]) * scale, 1)
+        if "closed" in scurve.keys():
+            polyline.use_cyclic_u = scurve["closed"]
+
+        polyline.points.add(N - 1)
+        for i in range(0, N):
+            polyline.points[i].co = (float(value[i * 3]) * scale, float(value[i * 3+ 1]) * scale, float(value[i * 3+ 2]) * scale, 1)
 
         return polyline
+
+def import_nurbs_curve(scurve, bcurve, scale):
+
+    if "points" in scurve.keys():
+        points = scurve["points"]
+        N = int(len(points) / 3)
+
+        print(scurve)
+
+        nurbs = bcurve.splines.new('NURBS')
+        #nurbs.use_bezier_u = True
+        nurbs.use_endpoint_u = True
+        nurbs.order_u = scurve['degree'] + 1
+
+        if "closed" in scurve.keys():
+            nurbs.use_cyclic_u = scurve["closed"]
+
+        nurbs.points.add(N - 1)
+        for i in range(0, N):
+            nurbs.points[i].co = (float(points[i * 3]) * scale, float(points[i * 3+ 1]) * scale, float(points[i * 3+ 2]) * scale, 1)
+
+        return nurbs        
 
 def import_null(speckle_object, bcurve, scale):
     print(speckle_object['type'])
@@ -33,6 +59,7 @@ def import_null(speckle_object, bcurve, scale):
     print()
 
 CONVERT = {
+    "Curve": import_nurbs_curve,
     "Line": import_line,
     "Polyline": import_polyline,
     "Arc":import_null

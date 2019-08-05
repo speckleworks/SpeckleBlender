@@ -80,7 +80,7 @@ from bpy_speckle.ui.view3d import VIEW3D_PT_speckle, VIEW3D_UL_SpeckleAccounts, 
 from bpy_speckle.properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
 from bpy_speckle.properties.object import SpeckleObjectSettings
 from bpy_speckle.properties.collection import SpeckleCollectionSettings
-from bpy_speckle.operators.accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2
+from bpy_speckle.operators.accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2,SpeckleClearObjectCache, SpeckleClearAccountCache, SpeckleClearStreamCache, SpeckleLoadAccountStreams
 from bpy_speckle.operators.object import SpeckleUpdateObject
 from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectStream, SpeckleSelectOrphanObjects
 from bpy_speckle.operators.streams import NotImplementedOperator, SpeckleImportStream, SpeckleImportStreamRaw, SpeckleUpdateGlobal
@@ -101,7 +101,11 @@ classes = [
 classes.extend([
     SpeckleLoadAccounts, 
     SpeckleAddAccount, 
-    SpeckleImportStream2
+    SpeckleImportStream2,
+    SpeckleClearObjectCache,
+    SpeckleClearAccountCache, 
+    SpeckleClearStreamCache,
+    SpeckleLoadAccountStreams
     ])
 
 classes.extend([

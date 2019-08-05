@@ -81,6 +81,7 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
             account = speckle.accounts[speckle.active_account]
             col.template_list("VIEW3D_UL_SpeckleStreams", "", account, "streams", account, "active_stream")
             col.operator("scene.speckle_import_stream2", text="Load Stream")
+            col.operator("scene.speckle_delete_stream", text="Delete Stream")
             if len(account.streams) > 0:
                 account.active_stream = min(account.active_stream, len(account.streams) - 1)
                 col.label(text="Active stream: %s" % account.streams[account.active_stream].name)
@@ -88,6 +89,13 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
                 col.label(text="Units: %s" % account.streams[account.active_stream].units)
 
 
+        col.separator()
         col.label(text="View")
         col.operator("scene.speckle_view_stream_data_api", text='View stream data (API)')
         col.operator("scene.speckle_view_stream_objects_api", text='View stream objects (API)')
+        col.separator()
+        col.label(text="Cache")
+        col.operator("scene.speckle_cache_clear_objects", text="Clear Object Cache")
+        col.operator("scene.speckle_cache_clear_streams", text="Clear Stream Cache")
+        col.operator("scene.speckle_cache_clear_accounts", text="Clear Accounts")
+

@@ -37,8 +37,8 @@ class SpeckleLoadAccounts(bpy.types.Operator):
         profiles = cache.get_all_accounts()
 
         # If can't find SpeckleCache.db, try MigratedAccounts
-        if len(profiles) < 1:
-            profiles = client.load_local_profiles(None)
+        #if len(profiles) < 1:
+        #    profiles = client.load_local_profiles(None)
 
         for tup in profiles:
             #print(p)
@@ -121,6 +121,39 @@ class SpeckleAddAccount(bpy.types.Operator):
         wm = context.window_manager
         return wm.invoke_props_dialog(self) 
 
+class SpeckleLoadAccountStreams(bpy.types.Operator):
+    bl_idname = "scene.speckle_load_account_streams"
+    bl_label = "Speckle - Load Account Streams"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+
+        if len(context.scene.speckle.accounts) > 0 and context.scene.speckle.active_account >= 0:
+
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+
+            client = context.scene.speckle_client
+            client.server = account.server
+            client.s.headers.update({'Authorization': account.authToken})
+
+            account.streams.clear()
+            res = client.StreamsGetAllAsync()
+            if res == None or res['resources'] == None:
+                return {'CANCELLED'}
+
+            streams = sorted(res['resources'], key=lambda x: x['name'], reverse=False)
+
+            for s in streams:
+                stream = account.streams.add()
+                stream.name = s['name']
+                stream.streamId = s['streamId']
+                if 'baseProperties' in s.keys() and s['baseProperties'] is not None:
+                    if 'units' in s['baseProperties'].keys():
+                        stream.units = s['baseProperties']['units']   
+
+            return {'FINISHED'}
+        return {'CANCELLED'}
+
 unit_scale = {
     'Meters':1.0,
     'Centimeters':0.01,
@@ -201,8 +234,6 @@ class SpeckleImportStream2(bpy.types.Operator):
                     o.name = name
                     col.objects.unlink(existing[o.speckle.object_id])
 
-
-
                 col.objects.link(o)
 
                 #o.select_set(True)
@@ -217,3 +248,52 @@ class SpeckleImportStream2(bpy.types.Operator):
         bpy.context.view_layer.update()
         #print ("Received %i objects." % len(res.resources))
         return {'FINISHED'}
+
+
+class SpeckleClearObjectCache(bpy.types.Operator):
+    bl_idname = "scene.speckle_cache_clear_objects"
+    bl_label = "SpeckleCache - Clear Object Cache"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+
+        cache = context.scene.speckle_cache
+        if not cache.try_connect():
+            return {'CANCELLED'}
+
+        cache.delete_all("CachedObject")
+
+        return {'FINISHED'}
+
+
+class SpeckleClearAccountCache(bpy.types.Operator):
+    bl_idname = "scene.speckle_cache_clear_accounts"
+    bl_label = "SpeckleCache - Clear Accounts"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+
+        cache = context.scene.speckle_cache
+        if not cache.try_connect():
+            return {'CANCELLED'}
+
+        cache.delete_all("Account")
+        bpy.ops.scene.speckle_accounts_load()
+
+        return {'FINISHED'}
+
+
+class SpeckleClearStreamCache(bpy.types.Operator):
+    bl_idname = "scene.speckle_cache_clear_streams"
+    bl_label = "SpeckleCache - Clear Stream Cache"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+
+        cache = context.scene.speckle_cache
+        if not cache.try_connect():
+            return {'CANCELLED'}
+
+        cache.delete_all("CachedStream")
+
+        return {'FINISHED'}   
