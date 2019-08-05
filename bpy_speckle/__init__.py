@@ -74,7 +74,7 @@ except:
     except:
         raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
 
-from speckle import SpeckleApiClient
+from speckle import SpeckleApiClient, SpeckleCache
 
 from bpy_speckle.ui.view3d import VIEW3D_PT_speckle, VIEW3D_UL_SpeckleAccounts, VIEW3D_UL_SpeckleStreams
 from bpy_speckle.properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
@@ -155,6 +155,7 @@ def register():
     bpy.types.Object.speckle = bpy.props.PointerProperty(type=SpeckleObjectSettings)
 
     bpy.types.Scene.speckle_client = SpeckleApiClient()
+    bpy.types.Scene.speckle_cache = SpeckleCache()
 
     handler = bpy.types.SpaceView3D.draw_handler_add(draw_speckle_info, (None, None), 'WINDOW', 'POST_PIXEL')
 

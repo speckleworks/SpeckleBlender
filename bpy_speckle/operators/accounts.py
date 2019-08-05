@@ -8,6 +8,18 @@ from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_
 
 from speckle import SpeckleApiClient
 
+
+def tuple_to_account(tup):
+    assert len(tup) > 4
+
+    profile = {}
+    profile["server_name"] = tup[1]
+    profile["server"] = tup[2]
+    profile["email"] = tup[3]
+    profile["apitoken"] = tup[4]
+
+    return profile
+
 class SpeckleLoadAccounts(bpy.types.Operator):
     bl_idname = "scene.speckle_accounts_load"
     bl_label = "Speckle - Load Accounts"
@@ -17,15 +29,21 @@ class SpeckleLoadAccounts(bpy.types.Operator):
 
         client = context.scene.speckle_client
         context.scene.speckle.accounts.clear()
- 
-        profiles = client.load_local_profiles_from_database(None)
+
+        cache = context.scene.speckle_cache
+        if not cache.try_connect():
+            cache.create_database()
+
+        profiles = cache.get_all_accounts()
 
         # If can't find SpeckleCache.db, try MigratedAccounts
         if len(profiles) < 1:
             profiles = client.load_local_profiles(None)
 
-        for p in profiles:
+        for tup in profiles:
             #print(p)
+            p = tuple_to_account(tup)
+
             ua = context.scene.speckle.accounts.add()
             ua.name = p['server_name']
             ua.server=p['server'] 
@@ -36,6 +54,9 @@ class SpeckleLoadAccounts(bpy.types.Operator):
             client.s.headers.update({'Authorization': ua.authToken})
 
             res = client.StreamsGetAllAsync()
+            if res == None or res['resources'] == None:
+                return {'CANCELLED'}
+
             streams = sorted(res['resources'], key=lambda x: x['name'], reverse=False)
 
             for s in streams:
@@ -56,7 +77,7 @@ class SpeckleAddAccount(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     email: StringProperty(name="Email", description="User email.", default="")
-    pwd: StringProperty(name="Password", description="User password.", default="")
+    pwd: StringProperty(name="Password", description="User password.", default="", subtype='PASSWORD')
     host: StringProperty(name="Server", description="Server address.", default="https://hestia.speckle.works/api/v1")
 
     def execute(self, context):
@@ -67,20 +88,30 @@ class SpeckleAddAccount(bpy.types.Operator):
         if self.host is "":
             return {'FINISHED'}
 
+        cache = context.scene.speckle_cache
+
+        if not cache.try_connect():
+            cache.create_database()
+
+        if cache.account_exists(self.host, self.email):
+            print("Account already in database.")
+            return {'CANCELLED'}
+
         try:
             client.login(email=self.email, password=self.pwd)
         except AssertionError as e:
             print("Login failed.")
             return {'CANCELLED'}
 
-        
+        '''
         user = {
             'email': self.email, 
             'server': self.host,
             'server_name': "SpeckleServer",
             'apitoken': client.s.headers['Authorization']}
+        '''
 
-        client.write_profile_to_database(user)
+        cache.write_account(self.host, "Speckle Hestia", self.email, client.s.headers['Authorization'])
 
         bpy.ops.scene.speckle_accounts_load()
 
