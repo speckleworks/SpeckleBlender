@@ -118,7 +118,6 @@ class SpeckleDeleteStream(bpy.types.Operator):
 
     def execute(self, context):
         if not self.are_you_sure:
-            print ("Deleting stream %s cancelled." % self.available_streams)
             return {'CANCELLED'}
         self.are_you_sure = False
 

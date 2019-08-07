@@ -171,7 +171,7 @@ def get_scale_length(units):
 class SpeckleImportStream2(bpy.types.Operator):
     bl_idname = "scene.speckle_import_stream2"
     bl_label = "Speckle - Import Stream"
-    bl_options = {'REGISTER', 'UNDO'}   
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         bpy.context.view_layer.objects.active = None
@@ -199,14 +199,24 @@ class SpeckleImportStream2(bpy.types.Operator):
         client.server = account.server
         client.s.headers.update({'Authorization': account.authToken})
 
-        res = context.scene.speckle_client.StreamGetObjectsAsync(stream.streamId)
+        if stream.query:
+            print(stream.query)
+            res = context.scene.speckle_client.StreamGetObjectsAsync(stream.streamId, stream.query)
+        else:
+            res = context.scene.speckle_client.StreamGetObjectsAsync(stream.streamId)
         if res is None: return {'CANCELLED'}
 
         name = "SpeckleStream_{}_{}".format(stream.name, stream.streamId)
 
+        clear_collection = True
+
         if name in bpy.data.collections:
             col = bpy.data.collections[name]
+            if clear_collection:
+                for obj in col.objects:
+                    col.objects.unlink(obj)
         else:
+            print("DEBUG: Creating new collection...")
             col = bpy.data.collections.new(name)
 
         existing = {}
