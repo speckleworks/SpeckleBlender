@@ -43,7 +43,8 @@ from bpy.types import Operator
 # Try to import PySpeckle and install if necessary using pip
 try:
     import speckle
-except:
+except ModuleNotFoundError as error:
+    print(error.message)
     print("Attempting to install PySpeckle using pip...")
     try:
         try:
@@ -73,6 +74,10 @@ except:
             raise Exception("Failed to install PySpeckle.")
     except:
         raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
+except ImportError as error:
+    print("Failed to import speckle: {}".format(error.message))     
+except Exception as error:
+    print("Exception: {}".format(error))
 
 from speckle import SpeckleApiClient, SpeckleCache
 

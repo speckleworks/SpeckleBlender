@@ -37,12 +37,10 @@ def import_nurbs_curve(scurve, bcurve, scale):
         points = scurve["points"]
         N = int(len(points) / 3)
 
-        print(scurve)
+        #print(scurve)
 
         nurbs = bcurve.splines.new('NURBS')
-        #nurbs.use_bezier_u = True
-        nurbs.use_endpoint_u = True
-        nurbs.order_u = scurve['degree'] + 1
+
 
         if "closed" in scurve.keys():
             nurbs.use_cyclic_u = scurve["closed"]
@@ -51,6 +49,10 @@ def import_nurbs_curve(scurve, bcurve, scale):
         for i in range(0, N):
             nurbs.points[i].co = (float(points[i * 3]) * scale, float(points[i * 3+ 1]) * scale, float(points[i * 3+ 2]) * scale, 1)
 
+        #nurbs.use_bezier_u = True
+        nurbs.use_endpoint_u = True
+        nurbs.order_u = scurve['degree'] + 1
+                
         return nurbs        
 
 def import_null(speckle_object, bcurve, scale):
@@ -81,9 +83,10 @@ def import_polycurve(scurve, bcurve, scale):
 CONVERT['Polycurve'] = import_polycurve
 
 def import_curve(speckle_curve, scale):
+    name = speckle_curve['geometryHash']
+    curve_data = bpy.data.curves.new(name, type="CURVE")
     name = speckle_curve['_id']
 
-    curve_data = bpy.data.curves.new(name, type="CURVE")
     curve_data.dimensions = '3D'
     curve_data.resolution_u = 2
 

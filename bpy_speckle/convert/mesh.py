@@ -135,12 +135,18 @@ def to_bmesh(smesh, name="SpeckleMesh", scale=1.0):
 
 def import_mesh(speckle_mesh, scale=1.0):
 
-    name = speckle_mesh['_id']
+    if 'geometryHash' in speckle_mesh and speckle_mesh['geometryHash'] is not None:
+        name = speckle_mesh['geometryHash']
+    else:
+        name = speckle_mesh['_id']
+
     mesh = to_bmesh(speckle_mesh, name, scale)
 
-    if 'name' in speckle_mesh and speckle_mesh['name'] is not None:
-        name = speckle_mesh['name']
-        print("Name is: ", name)
+    name = speckle_mesh['_id']
+
+    #if 'name' in speckle_mesh and speckle_mesh['name'] is not None:
+    #    name = speckle_mesh['name']
+    #    #print("Name is: ", name)
 
     obj = bpy.data.objects.new(name, mesh)
 
