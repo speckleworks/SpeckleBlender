@@ -29,9 +29,9 @@ def add_dictionary(prop, blender_object, superkey):
             blender_object["{}.{}".format(superkey, key)] = prop[key]
 
 def add_custom_properties(speckle_object, blender_object):
-    try_add_property(speckle_object, blender_object, 'type', 'speckle_type')
-    try_add_property(speckle_object, blender_object, 'transform', 'speckle_transform')
-    try_add_property(speckle_object, blender_object, 'name', 'speckle_name')
+    try_add_property(speckle_object, blender_object, 'type', '_speckle_type')
+    try_add_property(speckle_object, blender_object, 'transform', '_speckle_transform')
+    try_add_property(speckle_object, blender_object, 'name', '_speckle_name')
 
     if 'properties' in speckle_object.keys()  and speckle_object['properties'] is not None:
         for key in speckle_object['properties'].keys():
