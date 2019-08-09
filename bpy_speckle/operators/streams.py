@@ -2,10 +2,8 @@ import bpy, bmesh,os
 import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 from speckle import SpeckleApiClient
 
-from bpy_speckle.SpeckleClientHelper import GetAvailableStreams
 from bpy_speckle.operators import get_available_streams, initialize_speckle_client
 
 class SpeckleViewStreamDataApi(bpy.types.Operator):

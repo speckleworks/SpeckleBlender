@@ -1,11 +1,9 @@
 import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-from bpy_speckle.SpeckleBlenderConverter import SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject, UpdateStream
 from speckle import SpeckleApiClient
 #from speckle import SpeckleResource
 
-from ..SpeckleClientHelper import GetAvailableStreams
 from ..operators import get_available_streams, initialize_speckle_client
 
 class SpeckleUpdateObject(bpy.types.Operator):
