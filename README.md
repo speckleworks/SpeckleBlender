@@ -14,7 +14,7 @@ This code is WIP and as such should be used with extreme caution, on non-sensiti
 
 1. Place `bpy_speckle` folder in your `addons` folder. On Windows this is typically `%APPDATA%/Blender Foundation/Blender/2.80/scripts/addons`.
 2. If `pip` is not installed in your Blender Python build, run Blender with admin privileges. Otherwise, start Blender as normal.
-3. `SpeckleBlender` installs and upgrades `PySpeckle` and its dependencies automatically. It will install these in the `%APPDATA%/Blender Foundation/Blender/2.80/scripts/addons/modules` folder.
+3. **SpeckleBlender** installs and upgrades **PySpeckle** and its dependencies automatically. It will install these in the `%APPDATA%/Blender Foundation/Blender/2.80/scripts/addons/modules` folder.
 4. Go to `Edit->Preferences` (Ctrl + Alt + U)
 5. Go to the `Add-ons` tab
 6. Find and enable `SpeckleBlender` in the `Scene` category
