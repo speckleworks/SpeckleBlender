@@ -2,7 +2,8 @@ import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 from bpy_speckle.properties.scene import SpeckleUserAccountObject
 
-import bpy_speckle.convert
+from bpy_speckle.convert import from_speckle_object
+from bpy_speckle.convert import to_speckle_object
 
 from speckle import SpeckleApiClient
 
