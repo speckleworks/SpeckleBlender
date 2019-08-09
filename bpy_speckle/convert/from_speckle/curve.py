@@ -99,4 +99,4 @@ def import_curve(speckle_curve, scale):
     add_material(speckle_curve, obj)
     add_custom_properties(speckle_curve, obj)
 
-    return obj             
+    return obj

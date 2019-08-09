@@ -158,4 +158,4 @@ def import_mesh(speckle_mesh, scale=1.0):
     add_material(speckle_mesh, obj)
     add_custom_properties(speckle_mesh, obj)
 
-    return obj	
+    return obj

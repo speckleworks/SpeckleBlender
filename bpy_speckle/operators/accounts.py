@@ -84,6 +84,7 @@ class SpeckleAddAccount(bpy.types.Operator):
 
         client = context.scene.speckle_client
         client.server = self.host
+        client.verbose = True
 
         if self.host is "":
             return {'FINISHED'}
@@ -95,7 +96,10 @@ class SpeckleAddAccount(bpy.types.Operator):
 
         if cache.account_exists(self.host, self.email):
             print("Account already in database.")
-            return {'CANCELLED'}
+            if True:
+                cache.delete_account(self.host, self.email)
+            else:
+                return {'CANCELLED'}
 
         try:
             client.login(email=self.email, password=self.pwd)
