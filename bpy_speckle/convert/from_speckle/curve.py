@@ -56,9 +56,8 @@ def import_nurbs_curve(scurve, bcurve, scale):
         return nurbs        
 
 def import_null(speckle_object, bcurve, scale):
-    print(speckle_object['type'])
-    print(speckle_object)
-    print()
+    print("Failed to convert type", speckle_object['type'])
+    return None
 
 CONVERT = {
     "Curve": import_nurbs_curve,
@@ -83,7 +82,11 @@ def import_polycurve(scurve, bcurve, scale):
 CONVERT['Polycurve'] = import_polycurve
 
 def import_curve(speckle_curve, scale):
-    name = speckle_curve['geometryHash']
+    if 'geometryHash' in speckle_curve and speckle_curve['geometryHash'] is not None:
+        name = speckle_curve['geometryHash']
+    else:
+        name = speckle_curve['_id']
+
     curve_data = bpy.data.curves.new(name, type="CURVE")
     name = speckle_curve['_id']
 

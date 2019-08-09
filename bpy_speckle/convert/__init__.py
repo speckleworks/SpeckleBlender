@@ -1,11 +1,6 @@
 from .from_speckle import *
 from .to_speckle import *
 
-def import_null(speckle_object, scale):
-    print(speckle_object['type'])
-    print(speckle_object)
-    print()
-
 FROM_SPECKLE = {
     "Mesh": import_mesh, 
     "Brep": import_brep,

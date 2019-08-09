@@ -40,11 +40,13 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
+import os
+
 # Try to import PySpeckle and install if necessary using pip
 try:
     import speckle
 except ModuleNotFoundError as error:
-    print(error.message)
+    print(error)
     print("Attempting to install PySpeckle using pip...")
     try:
         try:
@@ -60,14 +62,28 @@ except ModuleNotFoundError as error:
             else:
                 raise Exception("Failed to install pip.")
 
-        print("Installing PySpeckle... "),
+        print("Installing PySpeckle... ")
+
+        modulespath = os.path.normpath(
+                os.path.join(
+                    bpy.utils.script_path_user(),
+                    "addons",
+                    "modules"
+                    )
+                )
+        if not os.path.exists(modulespath):
+           os.makedirs(modulespath) 
+
+        print("Installing PySpeckle to {}... ".format(modulespath)),
+
+
 
         try:
             from pip import main as pipmain
         except:
             from pip._internal import main as pipmain
 
-        res = pipmain(["install", "speckle"])
+        res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])        
         if res == 0:
             import speckle
         else:
@@ -75,7 +91,7 @@ except ModuleNotFoundError as error:
     except:
         raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
 except ImportError as error:
-    print("Failed to import speckle: {}".format(error.message))     
+    print("Failed to import speckle: {}".format(error))     
 except Exception as error:
     print("Exception: {}".format(error))
 

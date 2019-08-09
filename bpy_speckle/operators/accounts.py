@@ -107,6 +107,8 @@ class SpeckleAddAccount(bpy.types.Operator):
             print("Login failed.")
             return {'CANCELLED'}
 
+        authtoken = client.me["authtoken"]
+
         '''
         user = {
             'email': self.email, 
@@ -115,7 +117,7 @@ class SpeckleAddAccount(bpy.types.Operator):
             'apitoken': client.s.headers['Authorization']}
         '''
 
-        cache.write_account(self.host, "Speckle Hestia", self.email, client.s.headers['Authorization'])
+        cache.write_account(self.host, "Speckle Hestia", self.email, authtoken)
 
         bpy.ops.scene.speckle_accounts_load()
 
