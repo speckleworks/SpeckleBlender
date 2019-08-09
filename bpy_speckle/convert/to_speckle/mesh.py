@@ -3,6 +3,10 @@ import bpy, bmesh, struct
 def export_mesh(blender_object, scale=1.0):
 	return None
 
+def SetGeometryHash(data):
+    code = hashlib.md5(data.encode('utf-8')).hexdigest()
+    return code
+
 def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     if obj.data.tessfaces is None or len(obj.data.tessfaces) < 1:
         obj.data.calc_tessface()
