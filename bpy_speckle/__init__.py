@@ -103,8 +103,8 @@ from bpy_speckle.properties.object import SpeckleObjectSettings
 from bpy_speckle.properties.collection import SpeckleCollectionSettings
 from bpy_speckle.operators.accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2,SpeckleClearObjectCache, SpeckleClearAccountCache, SpeckleClearStreamCache, SpeckleLoadAccountStreams
 from bpy_speckle.operators.object import SpeckleUpdateObject
-from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectStream, SpeckleSelectOrphanObjects
-from bpy_speckle.operators.streams import NotImplementedOperator, SpeckleImportStream, SpeckleImportStreamRaw, SpeckleUpdateGlobal
+from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectOrphanObjects
+from bpy_speckle.operators.streams import SpeckleUpdateGlobal
 
 
 classes = [
@@ -137,12 +137,8 @@ classes.extend([
     SpeckleViewStreamDataApi, 
     SpeckleViewStreamObjectsApi, 
     SpeckleDeleteStream, 
-    SpeckleSelectStream, 
     SpeckleSelectOrphanObjects, 
-    SpeckleImportStream, 
-    SpeckleImportStreamRaw, 
     SpeckleUpdateGlobal,
-    NotImplementedOperator,
     ])
 
 import blf

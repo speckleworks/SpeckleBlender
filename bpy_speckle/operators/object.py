@@ -4,7 +4,7 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionPro
 from speckle import SpeckleApiClient
 #from speckle import SpeckleResource
 
-from ..operators import get_available_streams, initialize_speckle_client
+#from ..operators import get_available_streams, initialize_speckle_client
 
 class SpeckleUpdateObject(bpy.types.Operator):
     bl_idname = "object.speckle_update"
