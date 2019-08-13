@@ -1,12 +1,10 @@
 import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-from bpy_speckle.SpeckleBlenderConverter import SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject, UpdateStream
 from speckle import SpeckleApiClient
 #from speckle import SpeckleResource
 
-from ..SpeckleClientHelper import GetAvailableStreams
-from ..operators import get_available_streams, initialize_speckle_client
+#from ..operators import get_available_streams, initialize_speckle_client
 
 class SpeckleUpdateObject(bpy.types.Operator):
     bl_idname = "object.speckle_update"
@@ -21,7 +19,7 @@ class SpeckleUpdateObject(bpy.types.Operator):
         stream =account.streams[account.active_stream]
 
         client.server = account.server
-        client.session.headers.update({'Authorization': account.authToken})   
+        client.s.headers.update({'Authorization': account.authToken})   
 
         '''
         # This is the easy way, but it seems that we need to delete the existing object
@@ -168,7 +166,7 @@ class SpeckleUploadObject(bpy.types.Operator):
             stream =account.streams[account.active_stream]
 
             client.server = account.server
-            client.session.headers.update({'Authorization': account.authToken})   
+            client.s.headers.update({'Authorization': account.authToken})   
 
             print(stream.name + "    " + stream.streamId)         
 
@@ -236,7 +234,7 @@ class SpeckleUploadObjectRaw(bpy.types.Operator):
     bl_label = "Speckle - Upload Object Raw"
     bl_options = {'REGISTER', 'UNDO'}
 
-    stream_id = StringProperty(
+    stream_id: StringProperty(
         name="Stream ID",
         description="Manually input stream ID.",
         )

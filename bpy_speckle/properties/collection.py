@@ -1,8 +1,7 @@
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-class SpeckleObjectSettings(bpy.types.PropertyGroup):
-    #enabled = bpy.props.BoolProperty(default=False, name="Enabled", update=register_speckle_object)
+class SpeckleCollectionSettings(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(default=False, name="Enabled")
 
     send_or_receive: bpy.props.EnumProperty(
@@ -13,5 +12,5 @@ class SpeckleObjectSettings(bpy.types.PropertyGroup):
                     "Receive data from Speckle server."))
             )
     stream_id: bpy.props.StringProperty(default="")
-    object_id: bpy.props.StringProperty(default="")
-    
+    name: bpy.props.StringProperty(default="")
+    units: bpy.props.StringProperty(default="")

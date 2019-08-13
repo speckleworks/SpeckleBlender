@@ -2,41 +2,15 @@ import bpy, bmesh,os
 import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
-from bpy_speckle.SpeckleBlenderConverter import Speckle_to_Blender, SpeckleMesh_to_Lists, Lists_to_Mesh, SpeckleMesh_to_MeshObject, MeshObject_to_SpeckleMesh, UpdateObject
 from speckle import SpeckleApiClient
 
-from bpy_speckle.SpeckleClientHelper import GetAvailableStreams
-from bpy_speckle.operators import get_available_streams, initialize_speckle_client
+#from bpy_speckle.operators import get_available_streams, initialize_speckle_client
 
 class SpeckleViewStreamDataApi(bpy.types.Operator):
     bl_idname = "scene.speckle_view_stream_data_api"
     bl_label = "Speckle - View Stream Data (API)"
     bl_options = {'REGISTER', 'UNDO'}
-    '''
-    available_streams = EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
 
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.prop(self, "available_streams")
-        
-    def invoke(self, context, event):
-        wm = context.window_manager
-
-        profiles = context.scene.speckle_client.load_local_profiles()
-        if len(profiles) < 1: raise ValueError('No profiles found.')
-        context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
-        context.scene.speckle.user = sorted(profiles.keys())[0]
-
-        stream_ids = GetAvailableStreams(context.scene.speckle_client)
-        context.scene['speckle_streams'] = stream_ids
-
-        return wm.invoke_props_dialog(self)    
-    '''
     def execute(self, context):
 
         if len(context.scene.speckle.accounts) > 0:
@@ -53,31 +27,6 @@ class SpeckleViewStreamObjectsApi(bpy.types.Operator):
     bl_label = "Speckle - View Stream Objects (API)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    '''
-    available_streams = EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.prop(self, "available_streams")
-        
-    def invoke(self, context, event):
-        wm = context.window_manager
-
-        profiles = context.scene.speckle_client.load_local_profiles()
-        if len(profiles) < 1: raise ValueError('No profiles found.')
-        context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
-        context.scene.speckle.user = sorted(profiles.keys())[0]
-
-        stream_ids = GetAvailableStreams(context.scene.speckle_client)
-        context.scene['speckle_streams'] = stream_ids
-
-        return wm.invoke_props_dialog(self)    
-    '''
     def execute(self, context):
         if len(context.scene.speckle.accounts) > 0:
             account = context.scene.speckle.accounts[context.scene.speckle.active_account]
@@ -93,25 +42,56 @@ class SpeckleDeleteStream(bpy.types.Operator):
     bl_label = "Speckle - Delete Stream"
     bl_options = {'REGISTER', 'UNDO'}
 
-    available_streams = EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
-
-    are_you_sure = BoolProperty(
+    are_you_sure: BoolProperty(
         name="Confirm",
         default=False,
         )
 
+    delete_collection: BoolProperty(
+        name="Delete collection",
+        default=False)
+
     def draw(self, context):
         layout = self.layout
         col = layout.column()
-        col.prop(self, "available_streams")
         col.prop(self, "are_you_sure")
+        col.prop(self, "delete_collection")
         
     def invoke(self, context, event):
         wm = context.window_manager
+        if len(context.scene.speckle.accounts) > 0:
+            return wm.invoke_props_dialog(self)   
+
+
+        return {'CANCELLED'} 
+
+    def execute(self, context):
+        if not self.are_you_sure:
+            return {'CANCELLED'}
+        self.are_you_sure = False
+
+        if len(context.scene.speckle.accounts) > 0:
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+
+            client = context.scene.speckle_client
+            client.server = account.server
+            client.s.headers.update({'Authorization': account.authToken})
+
+            if len(account.streams) > 0:
+                stream = account.streams[account.active_stream]
+                res = context.scene.speckle_client.StreamDeleteAsync(stream.streamId)
+                print(res['message'])
+
+                if self.delete_collection:
+                    col_name = "SpeckleStream_{}_{}".format(stream.name, stream.streamId)
+                    if col_name in bpy.data.collections:
+                        collection = bpy.data.collections[col_name]
+                        bpy.data.collections.remove(collection)
+
+                bpy.ops.scene.speckle_load_account_streams()
+
+                return {'FINISHED'}
+        return {'CANCELLED'}
 
         profiles = context.scene.speckle_client.load_local_profiles()
         if len(profiles) < 1: raise ValueError('No profiles found.')
@@ -120,73 +100,6 @@ class SpeckleDeleteStream(bpy.types.Operator):
 
         stream_ids = GetAvailableStreams(context.scene.speckle_client)
         context.scene['speckle_streams'] = stream_ids
-
-        return wm.invoke_props_dialog(self)    
-
-    def execute(self, context):
-        if not self.are_you_sure:
-            print ("Deleting stream %s cancelled." % self.available_streams)
-            return {'CANCELLED'}
-        self.are_you_sure = False
-
-        if self.available_streams == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
-
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
-
-        print ("Deleting %s..." % self.available_streams)
-        res = context.scene.speckle_client.StreamDeleteAsync(self.available_streams)
-        if res is None: return {'CANCELLED'}
-        return {'FINISHED'}
-
-class SpeckleSelectStream(bpy.types.Operator):
-    bl_idname = "scene.speckle_select_stream"
-    bl_label = "Speckle - Select Stream"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    '''
-    streamId = StringProperty(
-        name="Stream ID",
-        description="ID of stream to select.",
-        default="",
-        )
-    '''
-
-    available_streams = EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-        row.prop(self, "available_streams")    
-
-    def invoke(self, context, event):
-        wm = context.window_manager
-
-        profiles = context.scene.speckle_client.load_local_profiles()
-        if len(profiles) < 1: raise ValueError('No profiles found.')
-
-        context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
-
-        context.scene['speckle_streams'] = GetAvailableStreams(context.scene.speckle_client)
-
-        return wm.invoke_props_dialog(self)   
-
-    def execute(self, context):
-
-        for o in context.scene.objects:
-            if o.speckle.stream_id == self.available_streams:
-                o.select = True
-            else:
-                o.select = False
-
-        return {'FINISHED'}      
 
 class SpeckleSelectOrphanObjects(bpy.types.Operator):
     bl_idname = "scene.speckle_select_orphans"
@@ -212,153 +125,6 @@ class SpeckleSelectOrphanObjects(bpy.types.Operator):
 
         return {'FINISHED'}                  
 
-class SpeckleImportStream(bpy.types.Operator):
-    bl_idname = "scene.speckle_import_stream"
-    bl_label = "Speckle - Import Stream"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    available_streams = EnumProperty(
-        name="Available streams",
-        description="Available streams associated with account.",
-        items=get_available_streams,
-        )
-
-    clear_stream = BoolProperty(
-        name="Clear stream",
-        description="Delete existing objects that identify with this stream.",
-        default=True,
-        )
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.prop(self, "available_streams")
-        col.prop(self, "clear_stream")
-        
-    def invoke(self, context, event):
-        wm = context.window_manager
-
-        profiles = context.scene.speckle_client.load_local_profiles()
-        if len(profiles) < 1: raise ValueError('No profiles found.')
-        context.scene.speckle_client.use_existing_profile(sorted(profiles.keys())[0])
-        context.scene.speckle.user = sorted(profiles.keys())[0]
-
-        stream_ids = GetAvailableStreams(context.scene.speckle_client)
-        context.scene['speckle_streams'] = stream_ids
-
-        return wm.invoke_props_dialog(self)    
-
-    def execute(self, context):
-
-        if self.available_streams == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
-
-        # Not too elegant. Should compare individual objectIds and update object
-        # data instead of deleting every object that has the streamId.
-        if self.clear_stream:
-            for o in context.scene.objects:
-                if o.speckle.stream_id == self.available_streams:
-                    context.scene.objects.unlink(o)
-
-        context.scene.objects.active = None
-
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
-
-        print (self.available_streams)
-        res = context.scene.speckle_client.StreamGetObjectsAsync(self.available_streams)
-        if res is None: return {'CANCELLED'}
-
-        if 'resources' in res.keys():
-            stream = res['resources']
-
-            for resource in res['resources']:
-                o = Speckle_to_Blender(resource, context.scene.speckle.scale)
-
-                if o is None:
-                    continue
-
-                o.speckle.stream_id = self.available_streams
-                o.speckle.send_or_receive = 'receive'
-                o.select = True
-                bpy.context.scene.objects.link(o)
-
-        else:
-            #print(SpeckleResource.to_json_pretty(res))
-            pass
-
-        context.scene.update()
-        #print ("Received %i objects." % len(res.resources))
-        return {'FINISHED'}
-
-class SpeckleImportStreamRaw(bpy.types.Operator):
-    bl_idname = "scene.speckle_import_stream_raw"
-    bl_label = "Speckle - Import Stream Raw"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    stream_id = StringProperty(
-        name="Stream ID",
-        description="Manually input stream ID.",
-        )
-
-    clear_stream = BoolProperty(
-        name="Clear stream",
-        description="Delete existing objects that identify with this stream.",
-        default=True,
-        )
-
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.prop(self, "stream_id")
-        col.prop(self, "clear_stream")
-        
-    def execute(self, context):
-
-        if self.stream_id == "":
-            print ("Speckle: Specify stream ID.")
-            return {'FINISHED'}
-
-        # Not too elegant. Should compare individual objectIds and update object
-        # data instead of deleting every object that has the streamId.
-        if self.clear_stream:
-            for o in context.scene.objects:
-                if o.speckle.stream_id == self.stream_id:
-                    context.scene.objects.unlink(o)
-
-        context.scene.objects.active = None
-
-        if context.scene.speckle_client is None: 
-            print ("SpeckleClient was not initialized...")
-            return {'CANCELLED'}
-
-        print (self.stream_id)
-        res = context.scene.speckle_client.StreamGetObjectsAsync(self.stream_id)
-        if res is None: return {'CANCELLED'}
-
-        if 'resources' in res.keys():
-            stream = res['resources']
-
-            for resource in res['resources']:
-                o = Speckle_to_Blender(resource, context.scene.speckle.scale)
-
-                if o is None:
-                    continue
-
-                o.speckle.stream_id = self.stream_id
-                o.speckle.send_or_receive = 'receive'
-                o.select = True
-                bpy.context.scene.objects.link(o)
-
-        else:
-            #print(SpeckleResource.to_json_pretty(res))
-            pass
-
-        context.scene.update()
-        #print ("Received %i objects." % len(res.resources))
-        return {'FINISHED'}
 
 class SpeckleUpdateGlobal(bpy.types.Operator):
     bl_idname = "scene.speckle_update"
@@ -386,20 +152,3 @@ class SpeckleUpdateGlobal(bpy.types.Operator):
         context.scene.update()
         return {'FINISHED'}
 
-
-class NotImplementedOperator(bpy.types.Operator):
-    bl_idname = "scene.speckle_not_implemented"
-    bl_label = "Speckle - Dummy"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def draw(self, context):
-        layout = self.layout
-        row = layout.row()
-        label = row.label(text="Not implemented.")
-
-    def execute(self, context):
-
-        print ("Speckle :: Not implemented.")
-
-        context.scene.update()
-        return {'FINISHED'}
