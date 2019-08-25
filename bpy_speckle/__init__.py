@@ -42,58 +42,65 @@ from bpy.types import Operator
 
 import os
 
-# Try to import PySpeckle and install if necessary using pip
-try:
-    import speckle
-except ModuleNotFoundError as error:
-    print(error)
-    print("Attempting to install PySpeckle using pip...")
+def install_dependencies():
+    import sys
+    import os
     try:
         try:
             import pip
         except:
-            from subprocess import call
+            from subprocess import run as sprun
             print("Installing pip... "),
-            res = call("{} -m ensurepip".format(bpy.app.binary_path_python))
-            #res = call("{} -m pip install --upgrade pip==9.0.3".format(bpy.app.binary_path_python))
+            pyver = ""
+            if sys.platform != "win32":
+                pyver = "python{}.{}".format(
+                    sys.version_info.major,
+                    sys.version_info.minor
+                )
 
-            if res == 0:
+            ensurepip = os.path.normpath(
+                os.path.join(
+                    os.path.dirname(bpy.app.binary_path_python),
+                    "..", "lib", pyver, "ensurepip"
+                )
+            )
+            res = sprun([bpy.app.binary_path_python, ensurepip])
+
+            if res.returncode == 0:
                 import pip
             else:
                 raise Exception("Failed to install pip.")
 
-        print("Installing PySpeckle... ")
-
         modulespath = os.path.normpath(
-                os.path.join(
-                    bpy.utils.script_path_user(),
-                    "addons",
-                    "modules"
-                    )
-                )
+            os.path.join(
+                bpy.utils.script_path_user(),
+                "addons",
+                "modules"
+            )
+        )
         if not os.path.exists(modulespath):
            os.makedirs(modulespath) 
-
-        print("Installing PySpeckle to {}... ".format(modulespath)),
-
-
+        print("Installing speckle to {}... ".format(modulespath)),
 
         try:
             from pip import main as pipmain
         except:
             from pip._internal import main as pipmain
 
-        res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])        
-        if res == 0:
-            import speckle
-        else:
-            raise Exception("Failed to install PySpeckle.")
+        res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])
+        if res > 0:
+            raise Exception("Failed to install speckle.")
     except:
         raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
-except ImportError as error:
-    print("Failed to import speckle: {}".format(error))     
-except Exception as error:
-    print("Exception: {}".format(error))
+
+try:
+    import speckle
+except:
+    print("Failed to load speckle.")
+    from subprocess import call
+    id_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "install_dependencies.py")
+    call([bpy.app.binary_path_python, id_path, bpy.app.binary_path_python, bpy.utils.script_path_user()])
+    print("Please restart Blender.")
 
 from speckle import SpeckleApiClient, SpeckleCache
 
@@ -195,15 +202,4 @@ def unregister():
             unregister_class(cls)
 
 if __name__ == "__main__":
-    unregister()
-    print("\nRELOADING\n")
     register()
-
-
-    #for cls in classes:
-    #    if hasattr(bpy.types, cls.idname()):
-    #        unregister_class(cls)
-    #    register_class(cls)
-
-    # test call
-    #bpy.ops.import_3dm.some_data('INVOKE_DEFAULT')
