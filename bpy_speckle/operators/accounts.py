@@ -106,7 +106,8 @@ class SpeckleAddAccount(bpy.types.Operator):
             print("Login failed.")
             return {'CANCELLED'}
 
-        authtoken = client.me["authtoken"]
+        #print(client.me)
+        authtoken = client.me["apitoken"]
 
         '''
         user = {

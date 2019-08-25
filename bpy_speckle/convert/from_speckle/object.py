@@ -37,6 +37,6 @@ def add_custom_properties(speckle_object, blender_object):
         for key in speckle_object['properties'].keys():
             attr = speckle_object['properties'][key]
             if isinstance(attr, dict):
-                add_dictionary(attr, blender_object, "{}.{}".format('properties', key))
+                add_dictionary(attr, blender_object, "{}".format(key))
             else:
-                blender_object['properties.' + key] = attr
+                blender_object[key] = attr
