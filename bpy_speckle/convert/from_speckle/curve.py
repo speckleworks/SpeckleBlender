@@ -37,8 +37,6 @@ def import_nurbs_curve(scurve, bcurve, scale):
         points = scurve["points"]
         N = int(len(points) / 3)
 
-        #print(scurve)
-
         nurbs = bcurve.splines.new('NURBS')
 
 
@@ -49,7 +47,6 @@ def import_nurbs_curve(scurve, bcurve, scale):
         for i in range(0, N):
             nurbs.points[i].co = (float(points[i * 3]) * scale, float(points[i * 3+ 1]) * scale, float(points[i * 3+ 2]) * scale, 1)
 
-        #nurbs.use_bezier_u = True
         nurbs.use_endpoint_u = True
         nurbs.order_u = scurve['degree'] + 1
                 
