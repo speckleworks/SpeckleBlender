@@ -50,7 +50,10 @@ class SpeckleLoadAccounts(bpy.types.Operator):
             ua.authToken = p['apitoken']
 
             client.server = ua.server
-            client.s.headers.update({'Authorization': ua.authToken})
+            client.s.headers.update({
+                'content-type': 'application/json',
+                'Authorization': ua.authToken,
+            })
 
             res = client.StreamsGetAllAsync()
             if res == None or res['resources'] == None:

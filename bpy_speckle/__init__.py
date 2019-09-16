@@ -83,7 +83,8 @@ except ModuleNotFoundError as error:
         except:
             from pip._internal import main as pipmain
 
-        res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])        
+        #res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])        
+        res = pipmain(["install", "--upgrade", "speckle"])        
         if res == 0:
             import speckle
         else:
@@ -98,19 +99,34 @@ except Exception as error:
 from speckle import SpeckleApiClient, SpeckleCache
 
 from bpy_speckle.ui.view3d import VIEW3D_PT_speckle, VIEW3D_UL_SpeckleAccounts, VIEW3D_UL_SpeckleStreams
+from bpy_speckle.ui.object import OBJECT_PT_speckle
 from bpy_speckle.properties.scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
 from bpy_speckle.properties.object import SpeckleObjectSettings
 from bpy_speckle.properties.collection import SpeckleCollectionSettings
 from bpy_speckle.operators.accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2,SpeckleClearObjectCache, SpeckleClearAccountCache, SpeckleClearStreamCache, SpeckleLoadAccountStreams
-from bpy_speckle.operators.object import SpeckleUpdateObject
+from bpy_speckle.operators.object import SpeckleUpdateObject, SpeckleResetObject, SpeckleDeleteObject, SpeckleUploadObject, SpeckleUploadNgonsAsPolylines
 from bpy_speckle.operators.streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectOrphanObjects
-from bpy_speckle.operators.streams import SpeckleUpdateGlobal
+from bpy_speckle.operators.streams import SpeckleUpdateGlobal, SpeckleUploadStream, SpeckleCreateStream
+
+from bpy_speckle.callbacks import scb_on_mesh_edit
+from bpy.app.handlers import persistent
+
+
+@persistent
+def load_handler(dummy):
+    bpy.ops.scene.speckle_accounts_load()
+
+
+callbacks = [
+    scb_on_mesh_edit,
+    ]
 
 
 classes = [
     VIEW3D_PT_speckle, 
     VIEW3D_UL_SpeckleAccounts, 
     VIEW3D_UL_SpeckleStreams,
+    OBJECT_PT_speckle,
     SpeckleSceneObject, 
     SpeckleStreamObject,    
     SpeckleUserAccountObject,
@@ -126,11 +142,15 @@ classes.extend([
     SpeckleClearObjectCache,
     SpeckleClearAccountCache, 
     SpeckleClearStreamCache,
-    SpeckleLoadAccountStreams
+    SpeckleLoadAccountStreams,
     ])
 
 classes.extend([
-    SpeckleUpdateObject
+    SpeckleUpdateObject,
+    SpeckleResetObject, 
+    SpeckleDeleteObject, 
+    SpeckleUploadObject,
+    SpeckleUploadNgonsAsPolylines,
     ])
 
 classes.extend([
@@ -139,6 +159,8 @@ classes.extend([
     SpeckleDeleteStream, 
     SpeckleSelectOrphanObjects, 
     SpeckleUpdateGlobal,
+    SpeckleUploadStream,
+    SpeckleCreateStream,
     ])
 
 import blf
@@ -178,12 +200,28 @@ def register():
     bpy.types.Scene.speckle_client = SpeckleApiClient()
     bpy.types.Scene.speckle_cache = SpeckleCache()
 
+    '''
+    Add callbacks
+    '''
+    #if scb_on_mesh_edit not in bpy.app.handlers.depsgraph_update_pre:
+    #    bpy.app.handlers.depsgraph_update_pre.append(scb_on_mesh_edit)
+
     handler = bpy.types.SpaceView3D.draw_handler_add(draw_speckle_info, (None, None), 'WINDOW', 'POST_PIXEL')
+    bpy.app.handlers.load_post.append(load_handler)
+
 
 
 def unregister():
+    bpy.app.handlers.load_post.remove(load_handler)
+
     if handler:
         bpy.types.SpaceView3D.draw_handler_remove(handler, "WINDOW")
+
+    '''
+    Remove callbacks
+    '''
+    #if scb_on_mesh_edit in bpy.app.handlers.depsgraph_update_pre:
+    #    bpy.app.handlers.depsgraph_update_pre.remove(scb_on_mesh_edit)        
 
     from bpy.utils import unregister_class
     for cls in reversed(classes):

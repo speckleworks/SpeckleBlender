@@ -33,6 +33,6 @@ def from_speckle_object(speckle_object, scale):
 def to_speckle_object(blender_object, scale):
     blender_type = blender_object.type
 
-    if blender_type in TO_SPECKLE.kets():
+    if blender_type in TO_SPECKLE.keys():
         return TO_SPECKLE[blender_type](blender_object, scale)
 

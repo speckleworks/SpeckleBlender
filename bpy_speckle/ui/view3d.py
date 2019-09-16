@@ -88,6 +88,8 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
                 col.prop(account.streams[account.active_stream], "query", text="Filter")
                 col.operator("scene.speckle_import_stream2", text="Load Stream")
                 col.operator("scene.speckle_delete_stream", text="Delete Stream")                
+                col.operator("scene.speckle_upload_stream", text="Upload Stream")                
+                col.operator("scene.speckle_create_stream", text="Create Stream")                
                 col.label(text="Active stream: %s" % account.streams[account.active_stream].name)
                 col.label(text="Stream ID: %s" % account.streams[account.active_stream].streamId)
                 col.label(text="Units: %s" % account.streams[account.active_stream].units)

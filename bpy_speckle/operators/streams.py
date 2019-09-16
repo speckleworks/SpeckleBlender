@@ -3,6 +3,11 @@ import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 from speckle import SpeckleApiClient
+from .accounts import get_scale_length
+from bpy_speckle.convert import to_speckle_object
+from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
+
+from bpy_speckle.convert import from_speckle_object
 
 #from bpy_speckle.operators import get_available_streams, initialize_speckle_client
 
@@ -35,6 +40,49 @@ class SpeckleViewStreamObjectsApi(bpy.types.Operator):
 
                 webbrowser.open('%s/streams/%s/objects?omit=displayValue,base64' % (account.server, stream.streamId), new=2)
                 return {'FINISHED'}
+        return {'CANCELLED'}
+
+class SpeckleCreateStream(bpy.types.Operator):
+    bl_idname = "scene.speckle_create_stream"
+    bl_label = "Speckle - Create Stream"
+    bl_options = {'REGISTER', 'UNDO'}
+
+
+    stream_name: StringProperty(
+        name="Stream name",
+        default="SpeckleStream")
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "stream_name")
+        
+    def invoke(self, context, event):
+        wm = context.window_manager
+        if len(context.scene.speckle.accounts) > 0:
+            return wm.invoke_props_dialog(self)   
+
+        return {'CANCELLED'} 
+
+    def execute(self, context):
+
+        if len(context.scene.speckle.accounts) > 0:
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+
+            client = context.scene.speckle_client
+            client.server = account.server
+            client.s.headers.update({'Authorization': account.authToken})
+
+            #stream = {'name':self.stream_name, 'baseProperties':{'units':context.scene.unit_settings.length_unit.title()}}
+            stream = {'name':self.stream_name, 'baseProperties':{'units':"Millimeters"}}
+
+            client.streams.create(stream)
+            bpy.ops.scene.speckle_load_account_streams()
+
+            account.active_stream = account.streams.find(self.stream_name)
+
+
+            return {'FINISHED'}
         return {'CANCELLED'}
 
 class SpeckleDeleteStream(bpy.types.Operator):
@@ -125,7 +173,6 @@ class SpeckleSelectOrphanObjects(bpy.types.Operator):
 
         return {'FINISHED'}                  
 
-
 class SpeckleUpdateGlobal(bpy.types.Operator):
     bl_idname = "scene.speckle_update"
     bl_label = "Speckle - Update All"
@@ -152,3 +199,87 @@ class SpeckleUpdateGlobal(bpy.types.Operator):
         context.scene.update()
         return {'FINISHED'}
 
+class SpeckleUploadStream(bpy.types.Operator):
+    bl_idname = "scene.speckle_upload_stream"
+    bl_label = "Speckle - Upload Stream"
+    bl_options = {'REGISTER', 'UNDO'}
+
+
+    def execute(self, context):
+
+        selected = context.selected_objects
+
+        if len(selected) > 0:
+            # If active object is mesh
+
+            client = context.scene.speckle_client
+            client.verbose = True
+            account = context.scene.speckle.accounts[context.scene.speckle.active_account]
+            stream =account.streams[account.active_stream]
+
+            client.server = account.server
+            client.s.headers.update({
+                'content-type': 'application/json',
+                'Authorization': account.authToken,
+            })            
+
+            scale = context.scene.unit_settings.scale_length / get_scale_length(stream.units)
+
+            placeholders = []
+
+            for obj in selected:
+
+                if obj.type != 'MESH':
+                    continue
+
+                print("Converting {}".format(obj.name))
+
+                create_objects = []
+
+                ngons = obj.get("speckle_ngons_as_polylines", False)
+
+                if ngons:
+                    create_objects = export_ngons_as_polylines(obj, scale)
+                else:
+                    create_objects = [to_speckle_object(obj, scale)]
+
+                for new_object in create_objects:
+
+                    if '_id' in new_object.keys():
+                        del new_object['_id']
+
+                    if 'transform' in new_object.keys():
+                        del new_object['transform']
+
+                    if 'properties' in new_object.keys():
+                        del new_object['properties']
+
+                    res = client.objects.create(new_object)
+                    if res == None: return {'CANCELLED'}
+
+                    placeholders.append({'type':'Placeholder', '_id':res[0]['_id']})
+
+                    obj.speckle.enabled = True
+                    obj.speckle.object_id = res[0]['_id']
+                    obj.speckle.stream_id = stream.streamId
+                    obj.speckle.send_or_receive = 'send'                
+
+            res = client.StreamGetAsync(stream.streamId)
+            if res is None: return {'CANCELLED'}
+
+            stream = res['resource']
+            if '_id' in stream.keys():
+                del stream['_id']
+
+            stream['layers'][-1]['objectCount'] = len(placeholders)
+            stream['layers'][-1]['topology'] = "0-{}".format(len(placeholders))
+
+            print("Updating stream %s" % stream['streamId'])
+
+            res = client.StreamUpdateAsync(stream['streamId'], {'objects':placeholders, 'layers':stream['layers']})
+            print(res)
+
+            # Update view layer
+            context.view_layer.update()
+
+        return {'FINISHED'}    
