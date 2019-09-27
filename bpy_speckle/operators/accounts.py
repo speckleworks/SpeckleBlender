@@ -2,7 +2,7 @@ import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 from bpy_speckle.properties.scene import SpeckleUserAccountObject
 
-from bpy_speckle.convert import from_speckle_object
+from bpy_speckle.convert import from_speckle_object, get_speckle_subobjects
 from bpy_speckle.convert import to_speckle_object
 
 from speckle import SpeckleApiClient
@@ -239,24 +239,31 @@ class SpeckleImportStream2(bpy.types.Operator):
 
         if 'resources' in res.keys():
             for resource in res['resources']:
-                o = from_speckle_object(resource, scale)
+                new_objects = [from_speckle_object(resource, scale)]
+                #print("\n")
+                #print(resource)
+                resprops = resource.get("properties", None)
+                if (resprops):
+                    new_objects.extend(get_speckle_subobjects(resource['properties'], scale, resource['_id']))
 
-                if o is None:
-                    continue
+                for o in new_objects:
 
-                o.speckle.stream_id = stream.streamId
-                o.speckle.send_or_receive = 'receive'
+                    if o is None:
+                        continue
 
-                if o.speckle.object_id in existing.keys():
-                    name = existing[o.speckle.object_id].name
-                    existing[o.speckle.object_id].name = name + "__deleted"
-                    o.name = name
-                    col.objects.unlink(existing[o.speckle.object_id])
+                    o.speckle.stream_id = stream.streamId
+                    o.speckle.send_or_receive = 'receive'
 
-                col.objects.link(o)
+                    if o.speckle.object_id in existing.keys():
+                        name = existing[o.speckle.object_id].name
+                        existing[o.speckle.object_id].name = name + "__deleted"
+                        o.name = name
+                        col.objects.unlink(existing[o.speckle.object_id])
 
-                #o.select_set(True)
-                #bpy.context.scene.objects.link(o)
+                    col.objects.link(o)
+
+                    #o.select_set(True)
+                    #bpy.context.scene.objects.link(o)
 
         else:
             pass

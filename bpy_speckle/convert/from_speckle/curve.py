@@ -1,14 +1,15 @@
-import bpy
-from .object import add_custom_properties, add_material
-from mathutils import Vector
+import bpy, math
+from bpy_speckle.util import find_key_case_insensitive
+from mathutils import Vector, Quaternion
 
 CONVERT = {}
 
 
 def import_line(scurve, bcurve, scale):
 
-    if "value" in scurve.keys():
-        value = scurve["value"]
+    value = find_key_case_insensitive(scurve, "value")
+
+    if value:
 
         line = bcurve.splines.new('POLY')
         line.points.add(1)
@@ -22,8 +23,9 @@ CONVERT["Line"] = import_line
 
 def import_polyline(scurve, bcurve, scale):
 
-    if "value" in scurve.keys():
-        value = scurve["value"]
+    value = find_key_case_insensitive(scurve, "value")
+
+    if value:
         N = int(len(value) / 3)
 
         polyline = bcurve.splines.new('POLY')
@@ -41,15 +43,14 @@ CONVERT["Polyline"] = import_polyline
 
 def import_nurbs_curve(scurve, bcurve, scale):
 
-    if "points" in scurve.keys():
-        points = scurve["points"]
+    points = find_key_case_insensitive(scurve, "points")
+
+    if points:
         N = int(len(points) / 3)
 
         nurbs = bcurve.splines.new('NURBS')
 
-
-        if "closed" in scurve.keys():
-            nurbs.use_cyclic_u = scurve["closed"]
+        nurbs.use_cyclic_u = find_key_case_insensitive(scurve, "closed", False)
 
         nurbs.points.add(N - 1)
         for i in range(0, N):
@@ -64,50 +65,79 @@ CONVERT["Curve"] = import_nurbs_curve
 
 def import_arc(rcurve, bcurve, scale):
 
-    print(rcurve)
+    '''
+    Parse arc data from Speckle object dictionary
+    '''
+    plane = find_key_case_insensitive(rcurve, "plane")
+    if not plane:
+        return
 
-    spt = Vector(rcurve['startPoint']['value']) * scale
-    ept = Vector(rcurve['endPoint']['value']) * scale
-    cpt = Vector(rcurve['plane']['origin']['value']) * scale
+    origin = find_key_case_insensitive(plane, "origin")
+    normal = find_key_case_insensitive(plane, "normal")
+    normal = Vector(find_key_case_insensitive(normal, "value"))
 
-    r1 = spt - cpt
-    r2 = ept - cpt
+    xaxis = find_key_case_insensitive(plane, "xdir")
+    yaxis = find_key_case_insensitive(plane, "ydir")
 
-    r1.normalize()
-    r2.normalize()
+    radius = find_key_case_insensitive(rcurve, "radius", 0) * scale
+    startAngle = find_key_case_insensitive(rcurve, "startAngle", 0)
+    endAngle = find_key_case_insensitive(rcurve, "endAngle", 0)
 
-    d = rcurve['radius'] * rcurve['angleRadians'] * scale
-
-    normal = r1.cross(r2)
-
-    t1 = normal.cross(r1)
-    t2 = normal.cross(r2)
+    startQuat = Quaternion(normal, startAngle)
+    endQuat = Quaternion(normal, endAngle)
 
     '''
-    Temporary arc
+    Get start and end vectors, centre point, angles, etc.
+    '''
+
+    r1 = Vector(find_key_case_insensitive(xaxis, "value"))
+    r1.rotate(startQuat)
+
+    r2 = Vector(find_key_case_insensitive(xaxis, "value"))
+    r2.rotate(endQuat)
+
+    c = Vector(find_key_case_insensitive(origin, "value")) * scale
+
+    spt = c + r1 * radius
+    ept = c + r2 * radius
+
+    #d = radius * (endAngle - startAngle)
+    angle = endAngle - startAngle
+
+    t1 = normal.cross(r1)
+    #t2 = normal.cross(r2)
+
+    '''
+    Initialize arc data and calculate subdivisions
     '''
     arc = bcurve.splines.new('NURBS')
 
     arc.use_cyclic_u = False
 
-    arc.points.add(3)
+    Ndiv = max(int(math.floor(angle / 0.3)), 2)
+    step = angle / float(Ndiv)
+    stepQuat = Quaternion(normal, step)
+    tan = math.tan(step / 2) * radius
 
-    arc.points[0].co = (spt.x, spt.y, spt.z, 1)
-
-    sspt = spt + t1 * d * 0.33
-    arc.points[1].co = (sspt.x, sspt.y, sspt.z, 1)
-
-    eept = ept - t2 * d * 0.33
-    arc.points[2].co = (eept.x, eept.y, eept.z, 1)
-
-    arc.points[3].co = (ept.x, ept.y, ept.z, 1)
+    arc.points.add(Ndiv + 1)
 
     '''
-    print("ARC")
-    print("    StartPoint:", rcurve.Arc.StartPoint)
-    print("      EndPoint:", rcurve.Arc.EndPoint)
-    print("        Center:", rcurve.Arc.Center)
-    print("        Radius:", rcurve.Radius)
+    Set start and end points
+    '''
+    arc.points[0].co = (spt.x, spt.y, spt.z, 1)
+    arc.points[Ndiv + 1].co = (ept.x, ept.y, ept.z, 1)
+
+    '''
+    Set intermediate points
+    '''
+    for i in range(Ndiv):
+        t1 = normal.cross(r1)
+        pt = c + r1 * radius + t1 * tan
+        arc.points[i + 1].co = (pt.x, pt.y, pt.z, 1)
+        r1.rotate(stepQuat)
+
+    '''
+    Set curve settings
     '''
 
     arc.use_endpoint_u = True
@@ -123,7 +153,7 @@ def import_null(speckle_object, bcurve, scale):
 
 def import_polycurve(scurve, bcurve, scale):
 
-    segments = scurve.get("segments", [])
+    segments = find_key_case_insensitive(scurve, "segments")
 
     for seg in segments:
         speckle_type = seg.get("type", "")
@@ -135,18 +165,21 @@ def import_polycurve(scurve, bcurve, scale):
 
 CONVERT['Polycurve'] = import_polycurve
 
-def import_curve(speckle_curve, scale):
-    name = speckle_curve.get('geometryHash', None)
-    if name == None:
-        name = speckle_curve.get("_id", None)
+def import_curve(speckle_curve, scale, name=None):
+    if not name:
+        name = speckle_curve.get('geometryHash', None)
         if name == None:
-            name = "SpeckleCurve"
+            name = speckle_curve.get("_id", None)
+            if name == None:
+                name = "SpeckleCurve"
 
-    curve_data = bpy.data.curves.new(name, type="CURVE")
-    name = speckle_curve['_id']
+    if name in bpy.data.curves.keys():
+        curve_data = bpy.data.curves[name]
+    else:
+        curve_data = bpy.data.curves.new(name, type="CURVE")
 
     curve_data.dimensions = '3D'
-    curve_data.resolution_u = 2
+    curve_data.resolution_u = 12
 
     if speckle_curve["type"] not in CONVERT.keys():
         print("Unsupported curve type: {}".format(speckle_curve["type"]))
@@ -154,9 +187,4 @@ def import_curve(speckle_curve, scale):
 
     CONVERT[speckle_curve["type"]](speckle_curve, curve_data, scale)
 
-    obj = bpy.data.objects.new(name, curve_data)
-
-    add_material(speckle_curve, obj)
-    add_custom_properties(speckle_curve, obj)
-
-    return obj
+    return curve_data

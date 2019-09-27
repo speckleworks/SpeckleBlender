@@ -1,5 +1,5 @@
 import bpy, bmesh, struct
-from .object import add_custom_properties, add_material
+from bpy_speckle import util
 
 def add_vertices(smesh, bmesh, scale=1.0):
     
@@ -112,50 +112,35 @@ def add_uv_coords(smesh, bmesh):
                 del smesh['properties'][texKey]
 
 
-def to_bmesh(smesh, name="SpeckleMesh", scale=1.0):
+def to_bmesh(speckle_mesh, blender_mesh, name="SpeckleMesh", scale=1.0):
 
     bm = bmesh.new()
 
-    add_vertices(smesh, bm, scale)
-    add_faces(smesh, bm)
-    add_colors(smesh, bm)
-    add_uv_coords(smesh, bm)
+    add_vertices(speckle_mesh, bm, scale)
+    add_faces(speckle_mesh, bm)
+    add_colors(speckle_mesh, bm)
+    add_uv_coords(speckle_mesh, bm)
+
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(blender_mesh)
+    bm.free()
+
+    return blender_mesh
+
+
+def import_mesh(speckle_mesh, scale=1.0, name=None):
+    if not name:
+        if 'geometryHash' in speckle_mesh and speckle_mesh['geometryHash'] is not None:
+            name = speckle_mesh['geometryHash']
+        else:
+            name = speckle_mesh['_id']
+
 
     if name in bpy.data.meshes.keys():
         mesh = bpy.data.meshes[name]
     else:
         mesh = bpy.data.meshes.new(name=name)
 
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-    bm.to_mesh(mesh)
-    bm.free()
+    to_bmesh(speckle_mesh, mesh, name, scale)
 
     return mesh
-
-
-def import_mesh(speckle_mesh, scale=1.0):
-
-    if 'geometryHash' in speckle_mesh and speckle_mesh['geometryHash'] is not None:
-        name = speckle_mesh['geometryHash']
-    else:
-        name = speckle_mesh['_id']
-
-    mesh = to_bmesh(speckle_mesh, name, scale)
-
-    name = speckle_mesh['_id']
-
-    #if 'name' in speckle_mesh and speckle_mesh['name'] is not None:
-    #    name = speckle_mesh['name']
-    #    #print("Name is: ", name)
-
-    obj = bpy.data.objects.new(name, mesh)
-
-    obj.speckle.object_id = speckle_mesh['_id']
-    obj.speckle.enabled = True
-    obj.data.use_auto_smooth = True
-    #obj.data.auto_smooth_angle = 30
-
-    add_material(speckle_mesh, obj)
-    add_custom_properties(speckle_mesh, obj)
-
-    return obj

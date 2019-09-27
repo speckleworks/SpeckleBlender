@@ -1,34 +1,25 @@
 import bpy
 from .mesh import to_bmesh
-from .object import add_custom_properties, add_material
+from bpy_speckle.util import find_key_case_insensitive
 
-def import_brep(speckle_brep, scale):
+def import_brep(speckle_brep, scale, name=None):
+    if not name:
+        name = find_key_case_insensitive(speckle_brep, "geometryHash")
+        if not name:
+            name = speckle_brep['_id']
 
-    if 'geometryHash' in speckle_brep and speckle_brep['geometryHash'] is not None:
-        name = speckle_brep['geometryHash']
-    else:
-        name = speckle_brep['_id']
+    display_value = find_key_case_insensitive(speckle_brep, "displayValue")
 
-    dvKey = ""
-    if "displayValue" in speckle_brep.keys():
-        dvKey = "displayValue"
-    elif "displayvalue" in speckle_brep.keys():
-        dvKey = "displayvalue"
+    if display_value:
 
-    if dvKey != "":
-        mesh = to_bmesh(speckle_brep[dvKey], name, scale)
-        add_custom_properties(speckle_brep[dvKey], mesh)
+        if name in bpy.data.meshes.keys():
+            mesh = bpy.data.meshes[name]
+        else:
+            mesh = bpy.data.meshes.new(name=name)        
 
+        to_bmesh(display_value, mesh, name, scale)
+        #add_custom_properties(speckle_brep[dvKey], mesh)
     else:
         mesh = None
 
-    name = speckle_brep['_id']
-    obj = bpy.data.objects.new(name, mesh)
-
-    obj.speckle.object_id = speckle_brep['_id']
-    obj.speckle.enabled = True
-
-    add_material(speckle_brep, obj)
-    add_custom_properties(speckle_brep, obj)
-
-    return obj
+    return mesh
