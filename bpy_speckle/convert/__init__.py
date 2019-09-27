@@ -1,7 +1,10 @@
 import bpy
+from mathutils import Matrix
 
 from .from_speckle import *
 from .to_speckle import *
+from bpy_speckle.util import find_key_case_insensitive
+
 
 FROM_SPECKLE = {
     "Mesh": import_mesh, 
@@ -18,6 +21,19 @@ TO_SPECKLE = {
     "CURVE": export_curve,
     "EMPTY": export_empty,
 }
+
+def set_transform(speckle_object, blender_object):
+
+    transform = find_key_case_insensitive(speckle_object, "transform")
+    if transform:
+        if len(transform) == 16:
+            mat = Matrix(
+                list1=transform[0:3],
+                list2=transform[4:7],
+                list3=transform[8:11],
+                list4=transform[12:15]
+                )
+            blender_object.matrix_world = mat
 
 def add_material(smesh, blender_object):
         # Add material if there is one
@@ -95,6 +111,7 @@ def from_speckle_object(speckle_object, scale, name=None):
 
         add_custom_properties(speckle_object, blender_object)
         add_material(speckle_object, blender_object)
+        set_transform(speckle_object, blender_object)
 
         return blender_object             
 
