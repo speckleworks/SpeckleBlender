@@ -1,16 +1,11 @@
 import bpy, bmesh, struct
-from bpy_speckle import util
+from bpy_speckle.util import find_key_case_insensitive
 
 def add_vertices(smesh, bmesh, scale=1.0):
     
-    vertKey = ""
-    if 'vertices' in smesh.keys():
-        vertKey = 'vertices'
-    elif 'Vertices' in smesh.keys():
-        vertKey = 'Vertices'
+    sverts = find_key_case_insensitive(smesh, "vertices")
 
-    if vertKey != "":
-        sverts = smesh[vertKey]
+    if sverts:
         if len(sverts) > 0:
             for i in range(0, len(sverts), 3):
                 bmesh.verts.new((float(sverts[i]) * scale, float(sverts[i + 1]) * scale, float(sverts[i + 2]) * scale))  
@@ -19,14 +14,9 @@ def add_vertices(smesh, bmesh, scale=1.0):
 
 def add_faces(smesh, bmesh):
     
-    faceKey = ""
-    if 'faces' in smesh.keys():
-        faceKey = 'faces'
-    elif 'Faces' in smesh.keys():
-        faceKey = 'Faces'
+    sfaces = find_key_case_insensitive(smesh, "faces")
 
-    if faceKey != "":
-        sfaces = smesh[faceKey]
+    if sfaces:
         if len(sfaces) > 0:
             i = 0
             while (i < len(sfaces)):
@@ -48,16 +38,11 @@ def add_faces(smesh, bmesh):
             bmesh.verts.index_update()     
 
 def add_colors(smesh, bmesh):
+
     colors = []
+    scolors = find_key_case_insensitive(smesh, "colors")
 
-    colKey = ""
-    if 'colors' in smesh.keys():
-        colKey = 'colors'
-    elif 'Colors' in smesh.keys():
-        colKey = 'Colors'
-
-    if colKey != "":
-        scolors = smesh[colKey]
+    if scolors:
         if len(scolors) > 0:
 
             for i in range(0, len(scolors)):
@@ -75,41 +60,31 @@ def add_colors(smesh, bmesh):
 
 def add_uv_coords(smesh, bmesh):
 
-    if 'properties' in smesh.keys():
-        sprops = smesh["properties"]
-        if sprops is not None:
-            texKey = ""
-            if 'texture_coordinates' in sprops.keys():
-                texKey = 'texture_coordinates'
-            elif 'TextureCoordinates' in sprops.keys():
-                texKey = "TextureCoordinates"
+    sprops = find_key_case_insensitive(smesh, "properties")
+    if sprops:
+        texKey = ""
+        if 'texture_coordinates' in sprops.keys():
+            texKey = 'texture_coordinates'
+        elif 'TextureCoordinates' in sprops.keys():
+            texKey = "TextureCoordinates"
 
-            if texKey != "":
+        if texKey != "":
 
-                try:
-                    decoded = base64.b64decode(sprops[texKey]).decode("utf-8")
-                    s_uvs = decoded.split()
-                      
-                    if int(len(s_uvs) / 2) == len(bmesh.verts):
-                        for i in range(0, len(s_uvs), 2):
-                            uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
-                    else:
-                        print (len(s_uvs) * 2)
-                        print (len(bmesh.verts))
-                        print ("Failed to match UV coordinates to vert data.")
-                except:
-                    pass
-                '''
-                if len(uv) == len(verts):
-                    uv_layer = bm.loops.layers.uv.verify()
-                    bm.faces.layers.tex.verify()
-                    
-                    for f in bm.faces:
-                        for l in f.loops:
-                            luv = l[uv_layer]
-                            luv.uv = uv[l.vert.index]
-                '''
-                del smesh['properties'][texKey]
+            try:
+                decoded = base64.b64decode(sprops[texKey]).decode("utf-8")
+                s_uvs = decoded.split()
+                  
+                if int(len(s_uvs) / 2) == len(bmesh.verts):
+                    for i in range(0, len(s_uvs), 2):
+                        uv.append((float(s_uvs[i]), float(s_uvs[i+1])))
+                else:
+                    print (len(s_uvs) * 2)
+                    print (len(bmesh.verts))
+                    print ("Failed to match UV coordinates to vert data.")
+            except:
+                pass
+
+            del smesh['properties'][texKey]
 
 
 def to_bmesh(speckle_mesh, blender_mesh, name="SpeckleMesh", scale=1.0):
@@ -130,11 +105,9 @@ def to_bmesh(speckle_mesh, blender_mesh, name="SpeckleMesh", scale=1.0):
 
 def import_mesh(speckle_mesh, scale=1.0, name=None):
     if not name:
-        if 'geometryHash' in speckle_mesh and speckle_mesh['geometryHash'] is not None:
-            name = speckle_mesh['geometryHash']
-        else:
+        name = speckle_mesh.get("geometryHash")
+        if not name:
             name = speckle_mesh['_id']
-
 
     if name in bpy.data.meshes.keys():
         mesh = bpy.data.meshes[name]

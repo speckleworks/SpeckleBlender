@@ -65,7 +65,7 @@ def from_speckle_object(speckle_object, scale, name=None):
 
     speckle_type = speckle_object.get("type", None)
 
-    if speckle_type is not None:
+    if speckle_type:
         speckle_id = speckle_object.get("_id", "")
 
         if name:
@@ -97,7 +97,7 @@ def from_speckle_object(speckle_object, scale, name=None):
         add_material(speckle_object, blender_object)
 
         return blender_object             
-        
+
     return None
 
 def get_speckle_subobjects(attr, scale, name):

@@ -225,7 +225,7 @@ class SpeckleImportStream2(bpy.types.Operator):
                 for obj in col.objects:
                     col.objects.unlink(obj)
         else:
-            print("DEBUG: Creating new collection...")
+            #print("DEBUG: Creating new collection...")
             col = bpy.data.collections.new(name)
 
         existing = {}
@@ -240,8 +240,7 @@ class SpeckleImportStream2(bpy.types.Operator):
         if 'resources' in res.keys():
             for resource in res['resources']:
                 new_objects = [from_speckle_object(resource, scale)]
-                #print("\n")
-                #print(resource)
+                
                 resprops = resource.get("properties", None)
                 if (resprops):
                     new_objects.extend(get_speckle_subobjects(resource['properties'], scale, resource['_id']))
