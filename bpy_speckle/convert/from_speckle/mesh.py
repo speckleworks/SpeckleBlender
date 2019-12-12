@@ -1,4 +1,5 @@
 import bpy, bmesh, struct
+import base64
 from bpy_speckle.util import find_key_case_insensitive
 
 def add_vertices(smesh, bmesh, scale=1.0):
@@ -73,6 +74,7 @@ def add_uv_coords(smesh, bmesh):
             try:
                 decoded = base64.b64decode(sprops[texKey]).decode("utf-8")
                 s_uvs = decoded.split()
+                uv = []
                   
                 if int(len(s_uvs) / 2) == len(bmesh.verts):
                     for i in range(0, len(s_uvs), 2):
@@ -81,7 +83,18 @@ def add_uv_coords(smesh, bmesh):
                     print (len(s_uvs) * 2)
                     print (len(bmesh.verts))
                     print ("Failed to match UV coordinates to vert data.")
+
+                # Make UVs
+                uv_layer = bmesh.loops.layers.uv.verify()
+                #bmesh.faces.layers.tex.verify()
+                
+                for f in bmesh.faces:
+                    for l in f.loops:
+                        luv = l[uv_layer]
+                        luv.uv = uv[l.vert.index]
             except:
+                print("Failed to decode texture coordinates.")
+                raise
                 pass
 
             del smesh['properties'][texKey]
