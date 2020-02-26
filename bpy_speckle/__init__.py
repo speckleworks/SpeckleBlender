@@ -40,21 +40,41 @@ from bpy_extras.io_utils import ImportHelper
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy.types import Operator
 
-import os
+import os, sys
 
-# Try to import PySpeckle and install if necessary using pip
-try:
-    import speckle
-except ModuleNotFoundError as error:
-    print(error)
-    print("Attempting to install PySpeckle using pip...")
+def modules_path():
+    # set up addons/modules under the user
+    # script path. Here we'll install the
+    # dependencies
+    modulespath = os.path.normpath(
+        os.path.join(
+            bpy.utils.script_path_user(),
+            "addons",
+            "modules"
+        )
+    )
+    if not os.path.exists(modulespath):
+        os.makedirs(modulespath)
+
+    # set user modules path at beginning of paths for earlier hit
+    if sys.path[1] != modulespath:
+        sys.path.insert(1, modulespath)
+
+    return modulespath
+
+def install_dependencies():
+    modulespath = modules_path()
+
+    # Try to import PySpeckle and install if necessary using pip
     try:
+        from subprocess import run as sprun
         try:
             import pip
         except:
             from subprocess import call
             print("Installing pip... "),
-            res = call("{} -m ensurepip".format(bpy.app.binary_path_python))
+            #res = call("{} -m ensurepip".format(bpy.app.binary_path_python))
+            res = sprun([bpy.app.binary_path_python, "-m", "ensurepip"])
             #res = call("{} -m pip install --upgrade pip==9.0.3".format(bpy.app.binary_path_python))
 
             if res == 0:
@@ -62,39 +82,37 @@ except ModuleNotFoundError as error:
             else:
                 raise Exception("Failed to install pip.")
 
-        print("Installing PySpeckle... ")
+        print("Installing PySpeckle to \"{}\"... ".format(modulespath)),
 
-        modulespath = os.path.normpath(
+        pip3 = "pip3"
+        if sys.platform=="darwin":
+            pip3 = os.path.normpath(
                 os.path.join(
-                    bpy.utils.script_path_user(),
-                    "addons",
-                    "modules"
-                    )
+                os.path.dirname(bpy.app.binary_path_python),
+                "..",
+                "bin",
+                pip3
                 )
-        if not os.path.exists(modulespath):
-           os.makedirs(modulespath) 
+            )
 
-        print("Installing PySpeckle to {}... ".format(modulespath)),
-
-
-
-        try:
-            from pip import main as pipmain
-        except:
-            from pip._internal import main as pipmain
+        res = sprun([bpy.app.binary_path_python, "-m", "pip", "-V"])
 
         #res = pipmain(["install", "--upgrade", "--target", modulespath, "speckle"])        
-        res = pipmain(["install", "--upgrade", "speckle"])        
-        if res == 0:
-            import speckle
-        else:
-            raise Exception("Failed to install PySpeckle.")
+        #res = pipmain(["install", "--upgrade", "speckle"])
+        
+        #res = sprun([pip3, "install", "-t", "\"{}\"".format(modulespath), "speckle"])
+        res = sprun([bpy.app.binary_path_python, "-m", "pip", "install", "-q", "-t", "{}".format(modulespath), "--no-deps", "pydantic"])
+        res = sprun([bpy.app.binary_path_python, "-m", "pip", "install", "-q", "-t", "{}".format(modulespath), "speckle"])
+     
     except:
-        raise Exception("Failed to install dependencies. Please make sure you have pip installed.")
-except ImportError as error:
-    print("Failed to import speckle: {}".format(error))     
-except Exception as error:
-    print("Exception: {}".format(error))
+        raise Exception("Failed to run pip. Please make sure you have pip installed.")
+
+
+try:
+    import speckle
+except ModuleNotFoundError as error:
+    print("Speckle not found. Attempting to install dependencies...")
+    install_dependencies()
 
 from speckle import SpeckleApiClient, SpeckleCache
 

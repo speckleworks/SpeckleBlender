@@ -100,11 +100,11 @@ def from_speckle_object(speckle_object, scale, name=None):
             print("Failed to convert {} type".format(speckle_type))
             obdata = None
 
-
         if speckle_name in bpy.data.objects.keys():
             blender_object = bpy.data.objects[speckle_name]
             blender_object.data = obdata
-            blender_object.data.materials.clear()
+            if hasattr(obdata, "materials"):
+                blender_object.data.materials.clear()
         else:
             blender_object = bpy.data.objects.new(speckle_name, obdata) 
 
