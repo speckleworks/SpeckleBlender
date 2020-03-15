@@ -1,3 +1,7 @@
+'''
+Object operators
+'''
+
 import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
@@ -6,8 +10,6 @@ from bpy_speckle.convert import to_speckle_object
 from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
 
 from bpy_speckle.functions import get_scale_length, _report
-
-#from ..operators import get_available_streams, initialize_speckle_client
 
 class UpdateObject(bpy.types.Operator):
     bl_idname = "speckle.update_object"

@@ -1,4 +1,7 @@
-# Drawing callback to display active Speckle account
+'''
+Drawing callback to display active Speckle account
+'''
+
 import blf
 import bpy
 

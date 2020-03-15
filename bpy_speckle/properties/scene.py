@@ -1,3 +1,7 @@
+'''
+Scene properties
+'''
+
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty, IntProperty, PointerProperty
 from speckle import SpeckleApiClient, SpeckleCache

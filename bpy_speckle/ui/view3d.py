@@ -1,21 +1,33 @@
+'''
+Speckle UI elements for the 3d viewport
+'''
+
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 from bpy_speckle.functions import _get_accounts, _add_account, _get_streams, _report
 
+'''
+Compatibility 
+'''
 
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
 else:
     Region = "UI"
 
-def menu_func(self, context):
-    self.layout.operator(SpeckleUpdateObject.bl_idname, icon='MESH_CUBE')
+# def menu_func(self, context):
+#     self.layout.operator(SpeckleUpdateObject.bl_idname, icon='MESH_CUBE')
 
-
+'''
+Function to populate accounts list
+'''
 def get_available_accounts(self, context):
     return [(a, a, a.name) for a in context.scene.speckle.accounts]
 
+'''
+Speckle account list
+'''
 
 class VIEW3D_UL_SpeckleAccounts(bpy.types.UIList):
 
@@ -32,6 +44,10 @@ class VIEW3D_UL_SpeckleAccounts(bpy.types.UIList):
             layout.alignment = 'CENTER'
             layout.label(text="Accounts", icon_value=0)
 
+'''
+Speckle stream list
+'''
+
 class VIEW3D_UL_SpeckleStreams(bpy.types.UIList):
     def draw_item(self, context, layout, data, stream, active_data, active_propname):
         ob = data
@@ -45,6 +61,10 @@ class VIEW3D_UL_SpeckleStreams(bpy.types.UIList):
         elif self.layout_type in {'GRID'}:
             layout.alignment = 'CENTER'
             layout.label(text="Accounts", icon_value=0)
+
+'''
+Main Speckle UI panel in the 3d viewport
+'''
 
 class VIEW3D_PT_speckle(bpy.types.Panel):
     """Creates a Panel in the Object properties window"""

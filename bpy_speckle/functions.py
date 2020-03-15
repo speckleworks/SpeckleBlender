@@ -1,3 +1,7 @@
+'''
+Speckle functions
+'''
+
 unit_scale = {
     'Meters':1.0,
     'Centimeters':0.01,
@@ -12,6 +16,9 @@ Utility functions
 '''
 
 def _report(msg):
+    '''
+    Function for printing messages to the console
+    '''
     print("SpeckleBlender: {}".format(msg))
 
 def get_scale_length(units):
@@ -29,7 +36,6 @@ def tuple_to_account(tup):
     profile["apitoken"] = tup[4]
 
     return profile
-
 
 '''
 Client, account, and stream functions

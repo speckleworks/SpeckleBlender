@@ -58,18 +58,25 @@ from bpy_speckle.operators import *
 from bpy_speckle.callbacks import *
 from bpy.app.handlers import persistent
 
+'''
+Add load handler to initialize Speckle when 
+loading a Blender file
+'''
 
-# Add load handler to initialize Speckle when 
-# loading a Blender file
 @persistent
 def load_handler(dummy):
     bpy.ops.speckle.accounts_load()
 
+'''
+Permanent handle on callbacks
+'''
 
-# Permanent handle on callbacks
 callbacks = {}
 
-# Add Speckle classes for registering
+'''
+Add Speckle classes for registering
+'''
+
 speckle_classes = []
 speckle_classes.extend(operator_classes)
 speckle_classes.extend(property_classes)
@@ -80,7 +87,9 @@ def register():
     for cls in speckle_classes:
         register_class(cls)
 
-    # Register all new properties
+    '''
+    Register all new properties
+    '''
 
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
     bpy.types.Collection.speckle = bpy.props.PointerProperty(type=SpeckleCollectionSettings)

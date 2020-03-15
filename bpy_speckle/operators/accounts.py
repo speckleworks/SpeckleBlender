@@ -1,3 +1,7 @@
+'''
+Account operators
+'''
+
 import bpy, bmesh,os
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 from bpy_speckle.properties.scene import SpeckleUserAccountObject

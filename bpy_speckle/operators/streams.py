@@ -1,3 +1,7 @@
+'''
+Stream operators
+'''
+
 import bpy, bmesh,os
 import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
@@ -8,7 +12,6 @@ from bpy_speckle.convert import to_speckle_object, get_speckle_subobjects
 from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
 
 from bpy_speckle.convert import from_speckle_object
-
 
 '''
 Load stream objects
