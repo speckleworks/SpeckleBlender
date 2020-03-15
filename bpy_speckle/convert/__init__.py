@@ -37,18 +37,21 @@ def set_transform(speckle_object, blender_object):
 
 def add_material(smesh, blender_object):
         # Add material if there is one
-    if 'properties' in smesh.keys()  and smesh['properties'] is not None:
+    props = find_key_case_insensitive(smesh, "properties")
+    if props:
+        material = find_key_case_insensitive(props, "material")
+        if material:
+            material_name = material.get('name', None)
+            if material_name:
+                print ("bpySpeckle: Found material: %s" % material_name)
 
-        if 'material' in smesh['properties'].keys():
-            material_name = smesh['properties']['material']['name']
-            print ("bpySpeckle: Found material: %s" % material_name)
+                mat = bpy.data.materials.get(material_name)
 
-            mat = bpy.data.materials.get(material_name)
-
-            if mat is None:
-                mat = bpy.data.materials.new(name=material_name)
-            blender_object.data.materials.append(mat)
-            del smesh['properties']['material']
+                if mat is None:
+                    mat = bpy.data.materials.new(name=material_name)
+                blender_object.data.materials.append(mat)
+                #del smesh['properties']['material']
+                del material
 
 
 def try_add_property(speckle_object, blender_object, prop, prop_name):
@@ -97,11 +100,11 @@ def from_speckle_object(speckle_object, scale, name=None):
             print("Failed to convert {} type".format(speckle_type))
             obdata = None
 
-
         if speckle_name in bpy.data.objects.keys():
             blender_object = bpy.data.objects[speckle_name]
             blender_object.data = obdata
-            blender_object.data.materials.clear()
+            if hasattr(obdata, "materials"):
+                blender_object.data.materials.clear()
         else:
             blender_object = bpy.data.objects.new(speckle_name, obdata) 
 

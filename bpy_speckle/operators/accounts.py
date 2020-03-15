@@ -259,7 +259,8 @@ class SpeckleImportStream2(bpy.types.Operator):
                         o.name = name
                         col.objects.unlink(existing[o.speckle.object_id])
 
-                    if o not in col.objects:
+
+                    if o.name not in col.objects:
                         col.objects.link(o)
 
                     #o.select_set(True)
