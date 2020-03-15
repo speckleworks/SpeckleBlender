@@ -1,32 +1,33 @@
-from .accounts import SpeckleLoadAccounts, SpeckleAddAccount, SpeckleImportStream2,SpeckleClearObjectCache, SpeckleClearAccountCache, SpeckleClearStreamCache, SpeckleLoadAccountStreams
-from .object import SpeckleUpdateObject, SpeckleResetObject, SpeckleDeleteObject, SpeckleUploadObject, SpeckleUploadNgonsAsPolylines
-from .streams import SpeckleViewStreamDataApi, SpeckleViewStreamObjectsApi, SpeckleDeleteStream, SpeckleSelectOrphanObjects
-from .streams import SpeckleUpdateGlobal, SpeckleUploadStream, SpeckleCreateStream
+from .accounts import LoadAccounts, AddAccount, LoadAccountStreams
+from .object import UpdateObject, ResetObject, DeleteObject, UploadObject, UploadNgonsAsPolylines
+from .streams import DownloadStreamObjects, UploadStreamObjects, ViewStreamDataApi, ViewStreamObjectsApi, DeleteStream, SelectOrphanObjects
+from .streams import UpdateGlobal, CreateStream
+from .cache import ClearObjectCache, ClearAccountCache, ClearStreamCache
 
 operator_classes = [
-	SpeckleLoadAccounts, 
-	SpeckleAddAccount, 
-	SpeckleImportStream2,
-	SpeckleClearObjectCache, 
-	SpeckleClearAccountCache, 
-	SpeckleClearStreamCache, 
-	SpeckleLoadAccountStreams,
+	LoadAccounts, 
+	AddAccount, 
+	DownloadStreamObjects,
+	UploadStreamObjects,
+	ClearObjectCache, 
+	ClearAccountCache, 
+	ClearStreamCache, 
+	LoadAccountStreams,
 	]
 
 operator_classes.extend([
-	SpeckleUpdateObject, 
-	SpeckleResetObject, 
-	SpeckleDeleteObject, 
-	SpeckleUploadObject, 
-	SpeckleUploadNgonsAsPolylines,
+	UpdateObject, 
+	ResetObject, 
+	DeleteObject, 
+	UploadObject, 
+	UploadNgonsAsPolylines,
 	])
 
 operator_classes.extend([
-	SpeckleViewStreamDataApi, 
-	SpeckleViewStreamObjectsApi, 
-	SpeckleDeleteStream, 
-	SpeckleSelectOrphanObjects,
-	SpeckleUpdateGlobal, 
-	SpeckleUploadStream, 
-	SpeckleCreateStream,
+	ViewStreamDataApi, 
+	ViewStreamObjectsApi, 
+	DeleteStream, 
+	SelectOrphanObjects,
+	UpdateGlobal, 
+	CreateStream,
 	])

@@ -85,6 +85,8 @@ def from_speckle_object(speckle_object, scale, name=None):
     speckle_type = speckle_object.get("type", None)
 
     if speckle_type:
+
+        subtypes = speckle_type.split('/')
         speckle_id = speckle_object.get("_id", "")
 
         if name:
@@ -94,11 +96,15 @@ def from_speckle_object(speckle_object, scale, name=None):
         else:
             speckle_name = "Unidentified Speckle Object"
 
-        if speckle_type in FROM_SPECKLE.keys():
-            obdata = FROM_SPECKLE[speckle_type](speckle_object, scale, speckle_name)
-        else:
+        obdata = None
+
+        for st in reversed(subtypes):
+            if st in FROM_SPECKLE.keys():
+                obdata = FROM_SPECKLE[st](speckle_object, scale, speckle_name)
+                break
+
+        if obdata == None:
             print("Failed to convert {} type".format(speckle_type))
-            obdata = None
 
         if speckle_name in bpy.data.objects.keys():
             blender_object = bpy.data.objects[speckle_name]

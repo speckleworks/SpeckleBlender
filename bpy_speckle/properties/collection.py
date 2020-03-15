@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 class SpeckleCollectionSettings(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(default=False, name="Enabled")

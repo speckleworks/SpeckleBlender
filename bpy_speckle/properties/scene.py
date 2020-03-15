@@ -1,5 +1,6 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty, IntProperty
+from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty, IntProperty, PointerProperty
+from speckle import SpeckleApiClient, SpeckleCache
 
 class SpeckleSceneObject(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(default="")
@@ -35,3 +36,5 @@ class SpeckleSceneSettings(bpy.types.PropertyGroup):
     	description="Current user.",
     	default="Speckle User",
     	)
+    # client: SpeckleApiClient()
+    # cache: SpeckleCache()

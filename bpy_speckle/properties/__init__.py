@@ -1,6 +1,7 @@
 from .scene import SpeckleSceneSettings, SpeckleSceneObject, SpeckleUserAccountObject, SpeckleStreamObject
 from .object import SpeckleObjectSettings
 from .collection import SpeckleCollectionSettings
+from .addon import SpeckleAddonPreferences
 
 property_classes = [
 	SpeckleSceneObject, 
@@ -9,4 +10,5 @@ property_classes = [
 	SpeckleSceneSettings, 
 	SpeckleObjectSettings,
 	SpeckleCollectionSettings,
+	SpeckleAddonPreferences,
 	]

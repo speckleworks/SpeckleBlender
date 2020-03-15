@@ -1,6 +1,9 @@
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
+from bpy_speckle.functions import _get_accounts, _add_account, _get_streams, _report
+
+
 if bpy.app.version < (2,80,0):
     Region = "TOOLS"
 else:
@@ -59,23 +62,19 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
 
         layout = self.layout
         col = layout.column()
-        #col.operator("scene.speckle_update", text='Update scene')
-        #col.label(text="Streams")
-        #col.operator("scene.speckle_import_stream", text='Import stream')
-        #col.operator("scene.speckle_delete_stream", text='Delete stream')
-        #col.operator("scene.speckle_select_stream", text='Select stream')
-        #col.operator("scene.speckle_select_orphans", text='Select orphans')
-        #col.operator("scene.speckle_not_implemented", text='Create stream')
 
         col.label(text="Accounts")
         if len(speckle.accounts) > 0:
             col.label(text="Current user: %s" % speckle.accounts[speckle.active_account].name)
 
-        col.operator("scene.speckle_account_add", text="Add Account")
-        col.operator("scene.speckle_accounts_load", text="Load Accounts")
+        col.operator("speckle.account_add", text="Add Account")
+        col.operator("speckle.accounts_load", text="Load Accounts")
         col.template_list("VIEW3D_UL_SpeckleAccounts", "", speckle, "accounts", speckle, "active_account")
+
+        col.separator()
         col.label(text="Streams")
-        
+        col.operator("speckle.load_account_streams", text="Refresh")
+
         if len(speckle.accounts) > 0:
             speckle.active_account = min(speckle.active_account, len(speckle.accounts) - 1)
             account = speckle.accounts[speckle.active_account]
@@ -86,22 +85,26 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
                 account.active_stream = min(account.active_stream, len(account.streams) - 1)
 
                 col.prop(account.streams[account.active_stream], "query", text="Filter")
-                col.operator("scene.speckle_import_stream2", text="Load Stream")
-                col.operator("scene.speckle_delete_stream", text="Delete Stream")                
-                col.operator("scene.speckle_upload_stream", text="Upload Stream")                
-                col.operator("scene.speckle_create_stream", text="Create Stream")                
+                col.operator("speckle.download_stream_objects", text="Download Objects")
+                col.operator("speckle.upload_stream_objects", text="Upload Objects")                
+                col.separator()
+                col.operator("speckle.create_stream", text="Create Stream")                
+                col.operator("speckle.delete_stream", text="Delete Stream")                
                 col.label(text="Active stream: %s" % account.streams[account.active_stream].name)
                 col.label(text="Stream ID: %s" % account.streams[account.active_stream].streamId)
                 col.label(text="Units: %s" % account.streams[account.active_stream].units)
+            else:
+                _get_streams(speckle.client, account)
+
 
 
         col.separator()
         col.label(text="View")
-        col.operator("scene.speckle_view_stream_data_api", text='View stream data (API)')
-        col.operator("scene.speckle_view_stream_objects_api", text='View stream objects (API)')
+        col.operator("speckle.view_stream_data_api", text='View stream data (API)')
+        col.operator("speckle.view_stream_objects_api", text='View stream objects (API)')
         col.separator()
         col.label(text="Cache")
-        col.operator("scene.speckle_cache_clear_objects", text="Clear Object Cache")
-        col.operator("scene.speckle_cache_clear_streams", text="Clear Stream Cache")
-        col.operator("scene.speckle_cache_clear_accounts", text="Clear Accounts")
+        col.operator("speckle.cache_clear_objects", text="Clear Object Cache")
+        col.operator("speckle.cache_clear_streams", text="Clear Stream Cache")
+        col.operator("speckle.cache_clear_accounts", text="Clear Accounts")
 

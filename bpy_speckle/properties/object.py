@@ -1,5 +1,5 @@
 import bpy
-from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 
 class SpeckleObjectSettings(bpy.types.PropertyGroup):
     #enabled = bpy.props.BoolProperty(default=False, name="Enabled", update=register_speckle_object)

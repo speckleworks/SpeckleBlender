@@ -63,7 +63,7 @@ from bpy.app.handlers import persistent
 # loading a Blender file
 @persistent
 def load_handler(dummy):
-    bpy.ops.scene.speckle_accounts_load()
+    bpy.ops.speckle.accounts_load()
 
 
 # Permanent handle on callbacks
@@ -83,11 +83,13 @@ def register():
 
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
     bpy.types.Collection.speckle = bpy.props.PointerProperty(type=SpeckleCollectionSettings)
-
     bpy.types.Object.speckle = bpy.props.PointerProperty(type=SpeckleObjectSettings)
 
-    bpy.types.Scene.speckle_client = SpeckleApiClient()
-    bpy.types.Scene.speckle_cache = SpeckleCache()
+    SpeckleSceneSettings.client = SpeckleApiClient()
+    SpeckleSceneSettings.cache = SpeckleCache()
+
+    # bpy.types.Scene.speckle_client = SpeckleApiClient()
+    # bpy.types.Scene.speckle_cache = SpeckleCache()
 
     '''
     Add callbacks
