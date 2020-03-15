@@ -26,6 +26,7 @@ class UpdateObject(bpy.types.Operator):
         
         active = context.active_object
         _report(active)
+
         if active is not None:
             if active.speckle.enabled:
                 if active.speckle.send_or_receive == "send" and active.speckle.stream_id:
@@ -45,19 +46,19 @@ class UpdateObject(bpy.types.Operator):
 
                     return {'FINISHED'}
 
-                    res = client.ObjectCreateAsync([sm])
-                    new_id = res['resources'][0]['_id']
+                    # res = client.ObjectCreateAsync([sm])
+                    # new_id = res['resources'][0]['_id']
 
-                    for o in stream_data['objects']:
-                        if o['_id'] == active.speckle.object_id:
-                            o['_id'] = new_id
-                            break
+                    # for o in stream_data['objects']:
+                    #     if o['_id'] == active.speckle.object_id:
+                    #         o['_id'] = new_id
+                    #         break
 
-                    res = client.StreamUpdateAsync(active.speckle.stream_id, {'objects': stream_data['objects']})
-                    res = client.ObjectDeleteAsync(active.speckle.object_id)
-                    active.speckle.object_id = new_id
+                    # res = client.StreamUpdateAsync(active.speckle.stream_id, {'objects': stream_data['objects']})
+                    # res = client.ObjectDeleteAsync(active.speckle.object_id)
+                    # active.speckle.object_id = new_id
 
-                    if res == None: return {'CANCELLED'}
+                    # if res == None: return {'CANCELLED'}
             return {'FINISHED'}
         return {'CANCELLED'}            
 
@@ -73,7 +74,7 @@ class ResetObject(bpy.types.Operator):
         context.object.speckle.stream_id = ""
         context.object.speckle.object_id = ""
         context.object.speckle.enabled = False
-        context.scene.update()
+        context.view_layer.update()
 
         return {'FINISHED'}
 
@@ -107,10 +108,9 @@ class DeleteObject(bpy.types.Operator):
             active.speckle.stream_id = ""
             active.speckle.object_id = ""
             active.speckle.enabled = False
-            context.scene.update()
+            context.view_layer.update()
 
         return {'FINISHED'}
-
 
 class UploadNgonsAsPolylines(bpy.types.Operator):
     bl_idname = "speckle.upload_ngons_as_polylines"
@@ -281,3 +281,57 @@ class UploadObject(bpy.types.Operator):
 
         return {'FINISHED'}    
      
+
+def get_custom_speckle_props(self, context):
+    ignore = ['speckle', 'cycles', 'cycles_visibility']
+
+    active = context.active_object
+    if not active: return []
+
+    return [(x, "{}".format(x), "") for x in active.keys()]
+
+class SelectCustomProperty(bpy.types.Operator):
+    bl_idname = "speckle.select_custom_props"
+    bl_label = "Select Custom Props"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    custom_prop: EnumProperty(
+        name="Custom properties",
+        description="Available streams associated with account.",
+        items=get_custom_speckle_props,
+        )
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "custom_prop")
+        
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)   
+
+    def execute(self, context):
+
+        active = context.active_object
+        if not active: 
+            return {'CANCELLED'}
+
+        if self.custom_prop not in active.keys():
+            return {'CANCELLED'}
+
+        value = active[self.custom_prop]
+
+        for obj in bpy.data.objects:
+
+            if self.custom_prop in obj.keys() and obj[self.custom_prop] == value:
+                obj.select_set(True)
+            else:
+                obj.select_set(False)
+
+        return {'FINISHED'}
+
+
+
+
+
+
