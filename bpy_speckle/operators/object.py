@@ -11,6 +11,11 @@ from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
 
 from bpy_speckle.functions import get_scale_length, _report
 
+'''
+Update local (receive) or remote (send) object depending on
+the update direction. If sending, updates the object on the 
+server in-place.
+'''
 class UpdateObject(bpy.types.Operator):
     bl_idname = "speckle.update_object"
     bl_label = "Update Object"
@@ -64,6 +69,9 @@ class UpdateObject(bpy.types.Operator):
             return {'FINISHED'}
         return {'CANCELLED'}            
 
+'''
+Reset Speckle object settings
+'''
 
 class ResetObject(bpy.types.Operator):
     bl_idname = "speckle.reset_object"
@@ -80,6 +88,9 @@ class ResetObject(bpy.types.Operator):
 
         return {'FINISHED'}
 
+'''
+Delete object from the server and update relevant stream
+'''
 class DeleteObject(bpy.types.Operator):
     bl_idname = "speckle.delete_object"
     bl_label = "Delete Object"
@@ -114,6 +125,9 @@ class DeleteObject(bpy.types.Operator):
 
         return {'FINISHED'}
 
+'''
+Upload mesh ngon faces as polyline outlines
+'''
 class UploadNgonsAsPolylines(bpy.types.Operator):
     bl_idname = "speckle.upload_ngons_as_polylines"
     bl_label = "Upload Ngons As Polylines"
@@ -297,9 +311,9 @@ Select scene objects if they have the same custom property
 value as the active object
 '''
 
-class SelectCustomProperty(bpy.types.Operator):
-    bl_idname = "speckle.select_custom_props"
-    bl_label = "Select Custom Props"
+class SelectIfSameCustomProperty(bpy.types.Operator):
+    bl_idname = "speckle.select_if_same_custom_props"
+    bl_label = "Select Identical Custom Props"
     bl_options = {'REGISTER', 'UNDO'}
 
     custom_prop: EnumProperty(
@@ -328,7 +342,7 @@ class SelectCustomProperty(bpy.types.Operator):
 
         value = active[self.custom_prop]
 
-        _report("{} : {}".format(self.custom_prop, value))
+        _report("Looking for '{}' property with a value of '{}'.".format(self.custom_prop, value))
 
         for obj in bpy.data.objects:
 
@@ -339,7 +353,52 @@ class SelectCustomProperty(bpy.types.Operator):
 
         return {'FINISHED'}
 
+'''
+Select scene objects if they have the same custom property
+as the active object, regardless of the value
+'''
 
+class SelectIfHasCustomProperty(bpy.types.Operator):
+    bl_idname = "speckle.select_if_has_custom_props"
+    bl_label = "Select Same Custom Prop"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    custom_prop: EnumProperty(
+        name="Custom properties",
+        description="Available streams associated with account.",
+        items=get_custom_speckle_props,
+        )
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "custom_prop")
+        
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)   
+
+    def execute(self, context):
+
+        active = context.active_object
+        if not active: 
+            return {'CANCELLED'}
+
+        if self.custom_prop not in active.keys():
+            return {'CANCELLED'}
+
+        value = active[self.custom_prop]
+
+        _report("Looking for '{}' property.".format(self.custom_prop))
+
+        for obj in bpy.data.objects:
+
+            if self.custom_prop in obj.keys():
+                obj.select_set(True)
+            else:
+                obj.select_set(False)
+
+        return {'FINISHED'}
 
 
 
