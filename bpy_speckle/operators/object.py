@@ -292,6 +292,11 @@ def get_custom_speckle_props(self, context):
 
     return [(x, "{}".format(x), "") for x in active.keys()]
 
+'''
+Select scene objects if they have the same custom property
+value as the active object
+'''
+
 class SelectCustomProperty(bpy.types.Operator):
     bl_idname = "speckle.select_custom_props"
     bl_label = "Select Custom Props"
@@ -322,6 +327,8 @@ class SelectCustomProperty(bpy.types.Operator):
             return {'CANCELLED'}
 
         value = active[self.custom_prop]
+
+        _report("{} : {}".format(self.custom_prop, value))
 
         for obj in bpy.data.objects:
 

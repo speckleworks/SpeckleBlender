@@ -1,9 +1,9 @@
+'''
+Cache operators
+'''
+
 import bpy
 from bpy.props import BoolProperty
-
-'''
-Cache functions
-'''
 
 class ClearObjectCache(bpy.types.Operator):
     bl_idname = "speckle.cache_clear_objects"
