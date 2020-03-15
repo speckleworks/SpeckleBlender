@@ -116,6 +116,11 @@ class SpeckleUploadNgonsAsPolylines(bpy.types.Operator):
     bl_label = "Speckle - Upload Ngons As Polylines"
     bl_options = {'REGISTER', 'UNDO'}
 
+    clear_stream: BoolProperty(
+        name="Clear stream", 
+        default=False,
+        )
+
 
     def execute(self, context):
 
@@ -145,13 +150,16 @@ class SpeckleUploadNgonsAsPolylines(bpy.types.Operator):
             placeholders = []
             for polyline in sp:
 
-                res = client.objects.create(polyline)
+                #res = client.objects.create(polyline)[0]
+                res = client.ObjectCreateAsync([polyline])['resources'][0]
+                print(res)
+
                 if res == None: 
                     print(client.me)
                     continue
 
-                polyline['_id'] = res[0]['_id']
-                placeholders.append({'type':'Placeholder', '_id':res[0]['_id']})
+                polyline['_id'] = res['_id']
+                placeholders.append({'type':'Placeholder', '_id':res['_id']})
 
             if len(placeholders) < 1:
                 return {'CANCELLED'}
@@ -165,9 +173,16 @@ class SpeckleUploadNgonsAsPolylines(bpy.types.Operator):
             if '_id' in stream.keys():
                 del stream['_id']
 
-            stream['objects'].extend(placeholders)
+            if self.clear_stream:
+                print("Clearing stream...")
+                stream['objects'] = placeholders
+                N = 0
+            else:
+                stream['objects'].extend(placeholders)
 
             N = stream['layers'][-1]['objectCount']
+            if self.clear_stream:
+                N = 0
             stream['layers'][-1]['objectCount'] = N + len(placeholders)
             stream['layers'][-1]['topology'] = "0-%s" % (N + len(placeholders))
 
@@ -177,7 +192,15 @@ class SpeckleUploadNgonsAsPolylines(bpy.types.Operator):
             context.view_layer.update()
             print("Done.")
 
-        return {'FINISHED'}   
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)   
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "clear_stream")
 
 class SpeckleUploadObject(bpy.types.Operator):
     bl_idname = "object.speckle_upload_object"
@@ -217,11 +240,12 @@ class SpeckleUploadObject(bpy.types.Operator):
             if 'properties' in sm.keys():
                 del sm['properties']
 
-            res = client.objects.create(sm)
+            #res = client.objects.create(sm)
+            res = client.ObjectCreateAsync([polyline])
             if res == None: return {'CANCELLED'}
 
-            sm['_id'] = res[0]['_id']
-            pl = {'type':'Placeholder', '_id':res[0]['_id']}
+            sm['_id'] = res['resources'][0]['_id']
+            pl = {'type':'Placeholder', '_id':res['resources'][0]['_id']}
 
             # Get list of existing objects in stream and append new object to list
             print("Fetching stream...")            

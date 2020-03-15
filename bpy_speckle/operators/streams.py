@@ -254,13 +254,15 @@ class SpeckleUploadStream(bpy.types.Operator):
                     if 'properties' in new_object.keys():
                         del new_object['properties']
 
-                    res = client.objects.create(new_object)
+                    #res = client.objects.create(new_object)
+                    res = client.ObjectCreateAsync([new_object])
+
                     if res == None: return {'CANCELLED'}
 
-                    placeholders.append({'type':'Placeholder', '_id':res[0]['_id']})
+                    placeholders.append({'type':'Placeholder', '_id':res['resources'][0]['_id']})
 
                     obj.speckle.enabled = True
-                    obj.speckle.object_id = res[0]['_id']
+                    obj.speckle.object_id = res['resources'][0]['_id']
                     obj.speckle.stream_id = stream.streamId
                     obj.speckle.send_or_receive = 'send'                
 
