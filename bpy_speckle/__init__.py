@@ -24,8 +24,8 @@
 bl_info = {
     "name": "SpeckleBlender",
     "author": "Tom Svilans",
-    "version": (0, 0, 1),
-    "blender": (2, 80, 0),
+    "version": (0, 1, 1),
+    "blender": (2, 82, 0),
     "location": "File > Import > SpeckleBlender",
     "description": "This addon lets you use the Speckle Python client",
     "warning": "This add-on is WIP and should be used with caution",
@@ -69,6 +69,7 @@ def load_handler(dummy):
 # Permanent handle on callbacks
 callbacks = {}
 
+# Add Speckle classes for registering
 speckle_classes = []
 speckle_classes.extend(operator_classes)
 speckle_classes.extend(property_classes)
@@ -79,7 +80,7 @@ def register():
     for cls in speckle_classes:
         register_class(cls)
 
-    # Register all properties
+    # Register all new properties
 
     bpy.types.Scene.speckle = bpy.props.PointerProperty(type=SpeckleSceneSettings)
     bpy.types.Collection.speckle = bpy.props.PointerProperty(type=SpeckleCollectionSettings)
