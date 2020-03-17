@@ -97,16 +97,14 @@ def _add_account(client, cache, email, pwd, host, host_name="Speckle Hestia"):
         else:
             return False
 
-    if DEBUG:
-        _report("client.login")
-
     try:
-        client.login(email=self.email, password=self.pwd)
+        client.login(email=email, password=pwd)
     except AssertionError as e:
         _report("Login failed.")
         return False
 
-    authtoken = client.get("me").get("apitoken")
+    #authtoken = client.get("me").get("apitoken")
+    authtoken = client.me.get("apitoken")
 
     '''
     user = {
@@ -169,12 +167,12 @@ def _get_accounts(scene):
         account.email=p['email']
         account.authToken = p['apitoken']
 
-def _create_stream(client, account, units="Millimeters"):
+def _create_stream(client, account, stream_name, units="Millimeters"):
 
     client.server = account.server
     client.s.headers.update({'Authorization': account.authToken})
 
-    stream = {'name':self.stream_name, 'baseProperties':{'units':units}}
+    stream = {'name':stream_name, 'baseProperties':{'units':units}}
 
     client.streams.create(stream)
 
@@ -183,7 +181,7 @@ def _delete_stream(client, account, stream):
     client.s.headers.update({'Authorization': account.authToken})
 
     if stream:
-        res = context.scene.speckle_client.StreamDeleteAsync(stream.streamId)
+        res = client.streams.delete(stream.streamId)
         _report(res['message'])
 
 '''
@@ -194,14 +192,14 @@ def _clear_cache_objects(cache):
     if not cache.try_connect():
         return False
 
-    cache.delete_all("Account")
+    cache.delete_all("CachedObject")
     return True
 
 def _clear_cache_accounts(cache):
     if not cache.try_connect():
         return False
 
-    cache.delete_all("CachedObject")
+    cache.delete_all("Account")
     return True    
 
 def _clear_cache_stream(cache):

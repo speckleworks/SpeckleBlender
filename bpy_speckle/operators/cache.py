@@ -4,6 +4,7 @@ Cache operators
 
 import bpy
 from bpy.props import BoolProperty
+from bpy_speckle.functions import _clear_cache_objects, _clear_cache_accounts, _clear_cache_stream
 
 class ClearObjectCache(bpy.types.Operator):
     bl_idname = "speckle.cache_clear_objects"
@@ -72,8 +73,10 @@ class ClearAccountCache(bpy.types.Operator):
         self.are_you_sure = False
 
         if _clear_cache_accounts(context.scene.speckle.cache):
+            print("Cleared accounts")
             bpy.ops.speckle.accounts_load()
             return {'FINISHED'}
+            bpy.context.view_layer.update()
 
         return {'CANCELLED'}
 

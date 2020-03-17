@@ -4,6 +4,8 @@ import base64, hashlib
 from time import strftime, gmtime
 
 
+ignored_keys=["speckle", "_speckle_type", "_speckle_name", "_RNA_UI", "transform"]
+
 def export_mesh(blender_object, scale=1.0):
     return MeshObject_to_SpeckleMesh(blender_object, scale)
 	#return None
@@ -22,7 +24,6 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
 
     #faces = [x.vertices for x in obj.data.polygons]
 
-    #sm = SpeckleResource.createSpeckleMesh()
     sm = {'vertices':[], 'faces':[]}
 
     for v in verts:
@@ -41,8 +42,7 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     # Add properties and custom data
     sm['properties'] = {}
     for key in obj.keys():
-        #print (key)
-        if key == "speckle" or key == "_RNA_UI":
+        if key in ignored_keys:
             continue
         if hasattr(obj[key], 'to_dict'):
             sm['properties'][key] = obj[key].to_dict()

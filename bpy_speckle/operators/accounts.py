@@ -60,6 +60,7 @@ class LoadAccounts(bpy.types.Operator):
         _report("Loading accounts...")
 
         _get_accounts(context.scene)
+        bpy.context.view_layer.update()
 
         # for account in speckle.accounts:
             # _get_streams(client, account)
@@ -81,6 +82,7 @@ class LoadAccountStreams(bpy.types.Operator):
         if len(speckle.accounts) > 0 and speckle.active_account >= 0 and speckle.active_account < len(speckle.accounts):
             account = speckle.accounts[speckle.active_account]
             _get_streams(client, account)
+            bpy.context.view_layer.update()
 
             return {'FINISHED'}
 

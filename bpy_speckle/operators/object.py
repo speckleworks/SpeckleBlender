@@ -39,14 +39,20 @@ class UpdateObject(bpy.types.Operator):
                 if active.speckle.send_or_receive == "send" and active.speckle.stream_id:
                     res = client.StreamGetAsync(active.speckle.stream_id)['resource']
                     #res = client.streams.get(active.speckle.stream_id)
-                    _report(res)
+
                     if res is None:
                         _report ("Getting stream failed.")
                         return {'CANCELLED'}
 
-                    scale = context.scene.unit_settings.scale_length / get_scale_length(res['baseProperties']['units'])
+                    stream_units = 1.0
+                    bp = res.get("baseProperties")
+                    if bp:
+                        stream_units = bp.get("units", "Meters")
+
+                    scale = context.scene.unit_settings.scale_length / get_scale_length(stream_units)
 
                     sm = to_speckle_object(active, scale)
+
 
                     _report("Updating object {}".format(sm['_id']))
                     client.objects.update(active.speckle.object_id, sm)

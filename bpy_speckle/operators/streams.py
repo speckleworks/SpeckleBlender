@@ -7,7 +7,7 @@ import webbrowser
 from bpy.props import StringProperty, BoolProperty, FloatProperty, CollectionProperty, EnumProperty
 
 # from speckle import SpeckleApiClient
-from bpy_speckle.functions import _check_speckle_client_account_stream, _get_stream_objects, _delete_stream, get_scale_length, _report
+from bpy_speckle.functions import _check_speckle_client_account_stream, _get_stream_objects, _create_stream, _delete_stream, get_scale_length, _report
 from bpy_speckle.convert import to_speckle_object, get_speckle_subobjects
 from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
 
@@ -217,10 +217,10 @@ class ViewStreamObjectsApi(bpy.types.Operator):
 
         speckle = context.scene.speckle
 
-        if len(speckle.accounts) > 0 and speckle.active_account > 0 and speckle.active_account < len(speckle.accounts):
+        if len(speckle.accounts) > 0 and speckle.active_account >= 0 and speckle.active_account < len(speckle.accounts):
             account = speckle.accounts[speckle.active_account]
 
-            if len(account.streams) > 0 and account.active_stream > 0 and account.active_stream < len(account.streams):
+            if len(account.streams) > 0 and account.active_stream >= 0 and account.active_stream < len(account.streams):
                 stream =account.streams[account.active_stream]         
 
                 webbrowser.open('%s/streams/%s/objects?omit=displayValue,base64' % (account.server, stream.streamId), new=2)
@@ -255,12 +255,12 @@ class CreateStream(bpy.types.Operator):
         client = context.scene.speckle.client
         speckle = context.scene.speckle
 
-        if len(speckle.accounts) > 0 and speckle.active_account > 0 and speckle.active_account < len(speckle.accounts):
+        if len(speckle.accounts) > 0 and speckle.active_account >= 0 and speckle.active_account < len(speckle.accounts):
             account = speckle.accounts[speckle.active_account]
 
             _create_stream(client, account, self.stream_name, context.scene.unit_settings.length_unit.title())
 
-            bpy.ops.scene.speckle_load_account_streams()
+            bpy.ops.speckle.load_account_streams()
 
             account.active_stream = account.streams.find(self.stream_name)
 
