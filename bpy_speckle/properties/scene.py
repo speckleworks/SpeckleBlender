@@ -24,6 +24,11 @@ class SpeckleUserAccountObject(bpy.types.PropertyGroup):
     streams: CollectionProperty(type=SpeckleStreamObject)
     active_stream: IntProperty(default=0)
 
+def get_scripts(self, context):
+    seq = [("<none>","<none>","<none>")]
+    seq.extend([(t.name, t.name, t.name) for t in bpy.data.texts])
+    return seq
+
 class SpeckleSceneSettings(bpy.types.PropertyGroup):
     streams: EnumProperty(
         name="Available streams",
@@ -40,5 +45,15 @@ class SpeckleSceneSettings(bpy.types.PropertyGroup):
     	description="Current user.",
     	default="Speckle User",
     	)
-    # client: SpeckleApiClient()
-    # cache: SpeckleCache()
+
+    download_script: EnumProperty(
+        name="Download script",
+        description="Script to run when downloading stream objects.",
+        items=get_scripts,
+        )
+
+    upload_script: EnumProperty(
+        name="Upload script",
+        description="Script to run when uploading stream objects.",
+        items=get_scripts,
+        )

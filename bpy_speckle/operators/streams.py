@@ -64,6 +64,16 @@ class DownloadStreamObjects(bpy.types.Operator):
 
         scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
 
+
+        '''
+        Get script from text editor for injection
+        '''
+        func = None 
+        if context.scene.speckle.download_script in bpy.data.texts:
+            mod = bpy.data.texts[context.scene.speckle.download_script].as_module()
+            if hasattr(mod, "execute"):
+                func = mod.execute
+
         '''
         Iterate through retrieved resources
         '''
@@ -82,6 +92,15 @@ class DownloadStreamObjects(bpy.types.Operator):
                 for new_object in new_objects:
 
                     if new_object is None:
+                        continue
+
+                    '''
+                    Run injected function
+                    '''
+                    if func:
+                        new_object = func(context.scene, new_object)
+
+                    if new_object is None: # Make sure that the injected function returned an object
                         continue
 
                     new_object.speckle.stream_id = stream.streamId
@@ -133,9 +152,27 @@ class UploadStreamObjects(bpy.types.Operator):
 
             placeholders = []
 
+            '''
+            Get script from text editor for injection
+            '''
+            func = None 
+            if context.scene.speckle.upload_script in bpy.data.texts:
+                mod = bpy.data.texts[context.scene.speckle.upload_script].as_module()
+                if hasattr(mod, "execute"):
+                    func = mod.execute
+
             for obj in selected:
 
                 if obj.type != 'MESH':
+                    continue
+
+                '''
+                Run injected function
+                '''
+                if func:
+                    new_object = func(context.scene, new_object)
+
+                if new_object is None: # Make sure that the injected function returned an object
                     continue
 
                 _report("Converting {}".format(obj.name))

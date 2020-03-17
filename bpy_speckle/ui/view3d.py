@@ -101,11 +101,14 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
             col.template_list("VIEW3D_UL_SpeckleStreams", "", account, "streams", account, "active_stream")
             col.separator()
 
+            
+
             if len(account.streams) > 0:
                 account.active_stream = min(account.active_stream, len(account.streams) - 1)
 
                 col.prop(account.streams[account.active_stream], "query", text="Filter")
                 col.operator("speckle.download_stream_objects", text="Download Objects")
+                col.prop(speckle, "download_script", text="Download script")
                 col.operator("speckle.upload_stream_objects", text="Upload Objects")                
                 col.separator()
                 col.operator("speckle.create_stream", text="Create Stream")                
