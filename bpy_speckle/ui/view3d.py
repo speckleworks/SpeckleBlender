@@ -110,6 +110,7 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
                 col.operator("speckle.download_stream_objects", text="Download Objects")
                 col.prop(speckle, "download_script", text="Download script")
                 col.operator("speckle.upload_stream_objects", text="Upload Objects")                
+                col.prop(speckle, "up_script", text="Upload script")
                 col.separator()
                 col.operator("speckle.create_stream", text="Create Stream")                
                 col.operator("speckle.delete_stream", text="Delete Stream")                
