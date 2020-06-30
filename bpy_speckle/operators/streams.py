@@ -13,6 +13,8 @@ from bpy_speckle.convert.to_speckle import export_ngons_as_polylines
 
 from bpy_speckle.convert import from_speckle_object
 
+from speckle.resources.streams import Stream
+
 '''
 Load stream objects
 '''
@@ -28,9 +30,9 @@ class DownloadStreamObjects(bpy.types.Operator):
         if check is None: return {'CANCELLED'}
 
         client, account, stream = check        
-        res = _get_stream_objects(client, account, stream)
+        objects = _get_stream_objects(client, account, stream)
 
-        if res is None: return {'CANCELLED'}
+        if objects is None or len(objects) < 1: return {'CANCELLED'}
 
         '''
         Create or get Collection for stream objects
@@ -61,7 +63,6 @@ class DownloadStreamObjects(bpy.types.Operator):
         '''
         Set conversion scale from stream units
         '''
-
         scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
 
 
@@ -77,51 +78,50 @@ class DownloadStreamObjects(bpy.types.Operator):
         '''
         Iterate through retrieved resources
         '''
-        resources = res.get("resources")
-        if resources:
-            for resource in resources:
-                new_objects = [from_speckle_object(resource, scale)]
-                
-                resprops = resource.get("properties")
-                if resprops:
-                    new_objects.extend(get_speckle_subobjects(resource['properties'], scale, resource['_id']))
+        for obj in objects:
+            new_objects = [from_speckle_object(obj, scale)]
+            
+            if hasattr(obj, "properties") and obj.properties is not None:
+                new_objects.extend(get_speckle_subobjects(obj.properties, scale, obj.id))
+            elif isinstance(obj, dict) and "properties" in obj.keys():
+                new_objects.extend(get_speckle_subobjects(obj["properties"], scale, obj["id"]))
+
+            '''
+            Set object Speckle settings
+            '''
+            for new_object in new_objects:
+
+                if new_object is None:
+                    continue
 
                 '''
-                Set object Speckle settings
+                Run injected function
                 '''
-                for new_object in new_objects:
+                if func:
+                    new_object = func(context.scene, new_object)
 
-                    if new_object is None:
-                        continue
+                if new_object is None: # Make sure that the injected function returned an object
+                    continue
 
-                    '''
-                    Run injected function
-                    '''
-                    if func:
-                        new_object = func(context.scene, new_object)
+                new_object.speckle.stream_id = stream.streamId
+                new_object.speckle.send_or_receive = 'receive'
 
-                    if new_object is None: # Make sure that the injected function returned an object
-                        continue
+                if new_object.speckle.object_id in existing.keys():
+                    name = existing[new_object.speckle.object_id].name
+                    existing[new_object.speckle.object_id].name = name + "__deleted"
+                    new_object.name = name
+                    col.objects.unlink(existing[new_object.speckle.object_id])
 
-                    new_object.speckle.stream_id = stream.streamId
-                    new_object.speckle.send_or_receive = 'receive'
-
-                    if new_object.speckle.object_id in existing.keys():
-                        name = existing[new_object.speckle.object_id].name
-                        existing[new_object.speckle.object_id].name = name + "__deleted"
-                        new_object.name = name
-                        col.objects.unlink(existing[new_object.speckle.object_id])
-
-
-                    if new_object.name not in col.objects:
-                        col.objects.link(new_object)
-        else:
-            pass
+                if new_object.name not in col.objects:
+                    col.objects.link(new_object)
 
         if col.name not in bpy.context.scene.collection.children:
             bpy.context.scene.collection.children.link(col)
 
         bpy.context.view_layer.update()
+
+        if context.area:
+            context.area.tag_redraw()
         return {'FINISHED'}
 
 class UploadStreamObjects(bpy.types.Operator):
@@ -166,11 +166,12 @@ class UploadStreamObjects(bpy.types.Operator):
                 if obj.type != 'MESH':
                     continue
 
+                new_object = obj
                 '''
                 Run injected function
                 '''
                 if func:
-                    new_object = func(context.scene, new_object)
+                    new_object = func(context.scene, obj)
 
                 if new_object is None: # Make sure that the injected function returned an object
                     continue
@@ -186,47 +187,42 @@ class UploadStreamObjects(bpy.types.Operator):
                 else:
                     create_objects = [to_speckle_object(obj, scale)]
 
-                for new_object in create_objects:
+                for co in create_objects:
 
-                    if '_id' in new_object.keys():
-                        del new_object['_id']
+                    placeholder = client.objects.create(co)
 
-                    if 'transform' in new_object.keys():
-                        del new_object['transform']
+                    if placeholder == None or len(placeholder) < 1: return {'CANCELLED'}
 
-                    if 'properties' in new_object.keys():
-                        del new_object['properties']
-
-                    #res = client.objects.create(new_object)
-                    res = client.ObjectCreateAsync([new_object])
-
-                    if res == None: return {'CANCELLED'}
-
-                    placeholders.append({'type':'Placeholder', '_id':res['resources'][0]['_id']})
+                    placeholders.extend(placeholder)
 
                     obj.speckle.enabled = True
-                    obj.speckle.object_id = res['resources'][0]['_id']
+                    obj.speckle.object_id = placeholder[0].id
                     obj.speckle.stream_id = stream.streamId
-                    obj.speckle.send_or_receive = 'send'                
+                    obj.speckle.send_or_receive = 'send'      
 
-            res = client.StreamGetAsync(stream.streamId)
-            if res is None: return {'CANCELLED'}
+            sstream = client.streams.get(stream.streamId)
+            if sstream is None: return {'CANCELLED'}
 
-            stream = res['resource']
-            if '_id' in stream.keys():
-                del stream['_id']
+            stream_patch = Stream()
 
-            stream['layers'][-1]['objectCount'] = len(placeholders)
-            stream['layers'][-1]['topology'] = "0-{}".format(len(placeholders))
+            stream_patch.objects = placeholders
+            stream_patch.layers = sstream.layers
+            stream_patch.baseProperties.units = stream.units
+            stream_patch.commitMessage = "Modified from Blender (blender.org)."
+
+            stream_patch.layers[-1].objectCount = len(placeholders)
+            stream_patch.layers[-1].topology = "0-{}".format(len(placeholders))
 
             _report("Updating stream %s" % stream['streamId'])
+            res = client.streams.update(stream['streamId'], stream_patch)
 
-            res = client.StreamUpdateAsync(stream['streamId'], {'objects':placeholders, 'layers':stream['layers']})
             _report(res)
 
             # Update view layer
             context.view_layer.update()
 
+        if context.area:
+            context.area.tag_redraw()
         return {'FINISHED'}
 
 class ViewStreamDataApi(bpy.types.Operator):

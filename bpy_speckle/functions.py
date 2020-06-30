@@ -1,3 +1,5 @@
+import speckle
+import requests
 '''
 Speckle functions
 '''
@@ -73,6 +75,13 @@ def _get_stream_objects(client, account, stream):
     client.server = account.server
     client.s.headers.update({'Authorization': account.authToken})
 
+    try:
+        sstream = client.streams.get(stream.streamId, stream.query)
+    except:
+        return []
+
+    return client.objects.get_bulk([o.id for o in sstream.objects], stream.query)
+
     if stream.query:
         _report(stream.query)
         res = client.StreamGetObjectsAsync(stream.streamId, stream.query)
@@ -82,6 +91,7 @@ def _get_stream_objects(client, account, stream):
     return res
 
 def _add_account(client, cache, email, pwd, host, host_name="Speckle Hestia"):
+    #print("Using server {}".format(host))
     client.server = host
 
     if host is "":
@@ -104,7 +114,8 @@ def _add_account(client, cache, email, pwd, host, host_name="Speckle Hestia"):
         return False
 
     #authtoken = client.get("me").get("apitoken")
-    authtoken = client.me.get("apitoken")
+    #authtoken = client.me.get("apitoken")
+    authtoken = client.me.get("token")
 
     '''
     user = {
@@ -115,7 +126,7 @@ def _add_account(client, cache, email, pwd, host, host_name="Speckle Hestia"):
     '''
     cache.write_account(host, host_name, email, authtoken)
 
-def _get_streams(client, account):
+def _get_streams(client, account, query=None, omit_clones=True):
 
     client.server = account.server
     client.s.headers.update({
@@ -123,25 +134,30 @@ def _get_streams(client, account):
         'Authorization': account.authToken,
     })
 
+    try:
+        streams = client.streams.list(query)
+    except Exception as e:
+        _report("Failed to retrieve streams: {}".format(e))
+        return
 
-
-    res = client.StreamsGetAllAsync()
-    if res == None or res['resources'] == None:
-        return None
+    if not streams:
+        _report("Failed to retrieve streams.")
+        return
 
     account.streams.clear()
 
-    streams = sorted(res['resources'], key=lambda x: x['name'], reverse=False)
+    streams = sorted(streams, key=lambda x: x.name, reverse=False)
 
     default_units = "Meters"
 
     for s in streams:
+        if omit_clones and s.name.endswith("(clone)"):
+            continue
         stream = account.streams.add()
-        stream.name = s['name']
-        stream.streamId = s['streamId']
-        bp = s.get("baseProperties")
-        if bp:
-            stream.units = bp.get("units", default_units)
+        stream.name = s.name
+        stream.streamId = s.streamId
+        if s.baseProperties:
+            stream.units = s.baseProperties.units
         else:
             stream.units = default_units
 
@@ -172,9 +188,11 @@ def _create_stream(client, account, stream_name, units="Millimeters"):
     client.server = account.server
     client.s.headers.update({'Authorization': account.authToken})
 
-    stream = {'name':stream_name, 'baseProperties':{'units':units}}
+    stream = speckle.resources.streams.Stream()
+    stream.name = stream_name
+    stream.baseProperties.units = units
 
-    client.streams.create(stream)
+    return client.streams.create(stream)
 
 def _delete_stream(client, account, stream):
     client.server = account.server

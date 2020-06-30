@@ -65,6 +65,8 @@ class LoadAccounts(bpy.types.Operator):
         # for account in speckle.accounts:
             # _get_streams(client, account)
 
+        if context.area:
+            context.area.tag_redraw()
         return {'FINISHED'}
 
 '''
@@ -81,10 +83,12 @@ class LoadAccountStreams(bpy.types.Operator):
 
         if len(speckle.accounts) > 0 and speckle.active_account >= 0 and speckle.active_account < len(speckle.accounts):
             account = speckle.accounts[speckle.active_account]
-            _get_streams(client, account)
+            _get_streams(client, account, {'deleted':'false', 'omit':'objects'}, omit_clones=True)
             bpy.context.view_layer.update()
 
             return {'FINISHED'}
 
+        if context.area:
+            context.area.tag_redraw()
         return {'CANCELLED'}
 

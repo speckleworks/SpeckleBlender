@@ -118,8 +118,7 @@ class VIEW3D_PT_speckle(bpy.types.Panel):
                 col.label(text="Stream ID: %s" % account.streams[account.active_stream].streamId)
                 col.label(text="Units: %s" % account.streams[account.active_stream].units)
             else:
-                _get_streams(speckle.client, account)
-
+                bpy.ops.speckle.load_account_streams()
 
 
         col.separator()

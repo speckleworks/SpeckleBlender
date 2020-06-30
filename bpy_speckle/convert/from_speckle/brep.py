@@ -4,20 +4,22 @@ from bpy_speckle.util import find_key_case_insensitive
 
 def import_brep(speckle_brep, scale, name=None):
     if not name:
-        name = find_key_case_insensitive(speckle_brep, "geometryHash")
+        name = speckle_brep.geometryHash
+        #name = find_key_case_insensitive(speckle_brep, "geometryHash")
         if not name:
-            name = speckle_brep['_id']
+            #name = speckle_brep['_id']
+            name = speckle_brep.id
 
-    display_value = find_key_case_insensitive(speckle_brep, "displayValue")
+    #display_value = find_key_case_insensitive(speckle_brep, "displayValue")
 
-    if display_value:
+    if speckle_brep.displayValue:
 
         if name in bpy.data.meshes.keys():
             mesh = bpy.data.meshes[name]
         else:
             mesh = bpy.data.meshes.new(name=name)        
 
-        to_bmesh(display_value, mesh, name, scale)
+        to_bmesh(speckle_brep.displayValue, mesh, name, scale)
         #add_custom_properties(speckle_brep[dvKey], mesh)
     else:
         mesh = None
