@@ -104,7 +104,7 @@ def _add_account(client, cache, email, pwd, host, host_name="Speckle Hestia"):
         return False
 
     #authtoken = client.get("me").get("apitoken")
-    authtoken = client.me.get("apitoken")
+    authtoken = client.me.get("token")
 
     '''
     user = {

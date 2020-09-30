@@ -172,8 +172,8 @@ class UploadStreamObjects(bpy.types.Operator):
                 if func:
                     new_object = func(context.scene, new_object)
 
-                if new_object is None: # Make sure that the injected function returned an object
-                    continue
+                    if new_object is None: # Make sure that the injected function returned an object
+                        continue
 
                 _report("Converting {}".format(obj.name))
 
@@ -188,40 +188,36 @@ class UploadStreamObjects(bpy.types.Operator):
 
                 for new_object in create_objects:
 
-                    if '_id' in new_object.keys():
-                        del new_object['_id']
-
-                    if 'transform' in new_object.keys():
-                        del new_object['transform']
-
-                    if 'properties' in new_object.keys():
-                        del new_object['properties']
+                    print(new_object)
 
                     #res = client.objects.create(new_object)
-                    res = client.ObjectCreateAsync([new_object])
+                    res = client.objects.create(new_object)
 
-                    if res == None: return {'CANCELLED'}
+                    print(res)
 
-                    placeholders.append({'type':'Placeholder', '_id':res['resources'][0]['_id']})
+                    if res == None or len(res) < 1: continue
+                    res = res[0]
+
+                    new_object.id = res.id
+
+                    placeholders.append({"type":"Placeholder", "id":res.id})
 
                     obj.speckle.enabled = True
-                    obj.speckle.object_id = res['resources'][0]['_id']
+                    obj.speckle.object_id = res.id
                     obj.speckle.stream_id = stream.streamId
                     obj.speckle.send_or_receive = 'send'                
 
-            res = client.StreamGetAsync(stream.streamId)
+            res = client.streams.get(stream.streamId)
             if res is None: return {'CANCELLED'}
 
-            stream = res['resource']
-            if '_id' in stream.keys():
-                del stream['_id']
+            stream = res
 
-            stream['layers'][-1]['objectCount'] = len(placeholders)
-            stream['layers'][-1]['topology'] = "0-{}".format(len(placeholders))
+            stream.layers[-1].objectCount = len(placeholders)
+            stream.layers[-1].topology = "0-{}".format(len(placeholders))
 
-            _report("Updating stream %s" % stream['streamId'])
+            _report("Updating stream %s" % stream.streamId)
 
-            res = client.StreamUpdateAsync(stream['streamId'], {'objects':placeholders, 'layers':stream['layers']})
+            res = client.streams.update(stream.streamId, {'objects':placeholders, 'layers':stream.layers})
             _report(res)
 
             # Update view layer

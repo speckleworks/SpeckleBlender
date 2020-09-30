@@ -254,6 +254,7 @@ class UploadObject(bpy.types.Operator):
 
             sm = to_speckle_object(active, scale)
 
+            '''
             if '_id' in sm.keys():
                 del sm['_id']
 
@@ -262,39 +263,35 @@ class UploadObject(bpy.types.Operator):
 
             if 'properties' in sm.keys():
                 del sm['properties']
-
-            #res = client.objects.create(sm)
-            res = client.ObjectCreateAsync([polyline])
+            '''
+            res = client.objects.create(sm)
+            #res = client.ObjectCreateAsync([polyline])
             if res == None: return {'CANCELLED'}
 
-            sm['_id'] = res['resources'][0]['_id']
+            sm.id = res['resources'][0]['_id']
             pl = {'type':'Placeholder', '_id':res['resources'][0]['_id']}
 
             # Get list of existing objects in stream and append new object to list
             _report("Fetching stream...")            
-            res = client.StreamGetAsync(stream.streamId)
+            res = client.streams.get(stream.streamId)
             #res = client.streams.get(stream.streamId)
             if res is None: return {'CANCELLED'}
 
-            stream = res['resource']
-            if '_id' in stream.keys():
-                del stream['_id']
+            stream.objects.append(pl)
 
-            stream['objects'].append(pl)
+            N = stream.layers[-1].objectCount
+            stream.layers[-1].objectCount = N + 1
+            stream.layers[-1].topology = "0-%s" % (N + 1)
 
-            N = stream['layers'][-1]['objectCount']
-            stream['layers'][-1]['objectCount'] = N + 1
-            stream['layers'][-1]['topology'] = "0-%s" % (N + 1)
+            _report("Updating stream %s" % stream.streamId)
 
-            _report("Updating stream %s" % stream['streamId'])
-
-            res = client.StreamUpdateAsync(stream['streamId'], {'objects':stream['objects'], 'layers':stream['layers']})
+            res = client.streams.update(stream['streamId'], {'objects':stream.objects, 'layers':stream.layers})
             #res = client.streams.update(stream['streamId'], {'objects':stream['objects'], 'layers':stream['layers']})
             _report(res)
 
             active.speckle.enabled = True
-            active.speckle.object_id = sm['_id']
-            active.speckle.stream_id = stream['streamId']
+            active.speckle.object_id = sm.id
+            active.speckle.stream_id = stream.streamId
             active.speckle.send_or_receive = 'send'
 
             # Update view layer
