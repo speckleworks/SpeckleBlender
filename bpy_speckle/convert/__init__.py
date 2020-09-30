@@ -97,7 +97,10 @@ def add_dictionary(prop, blender_object, superkey=None):
             if subtype and subtype in FROM_SPECKLE.keys():
                 continue
         else:
-            blender_object[key_name] = prop[key]
+            try:
+                blender_object[key_name] = prop[key]
+            except KeyError:
+                pass
 
 def add_custom_properties(speckle_object, blender_object):
 
