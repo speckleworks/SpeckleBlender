@@ -3,10 +3,7 @@ import bpy, bmesh, struct
 import base64, hashlib
 from time import strftime, gmtime
 
-from speckle.schemas.Mesh import Schema as SpeckleMesh
-
-
-ignored_keys=["speckle", "_speckle_type", "_speckle_name", "_RNA_UI", "transform"]
+import speckle.schemas
 
 def export_mesh(blender_object, scale=1.0):
     return MeshObject_to_SpeckleMesh(blender_object, scale)
@@ -25,9 +22,8 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     faces = [x.vertices for x in obj.data.loop_triangles]
 
     #faces = [x.vertices for x in obj.data.polygons]
-    sm = SpeckleMesh()
 
-    #sm = {'vertices':[], 'faces':[]}
+    sm = speckle.schemas.Mesh()
 
     for v in verts:
         sm.vertices.extend(v)
@@ -41,26 +37,6 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
             continue
 
         sm.faces.extend(f)
-
-    # Add properties and custom data
-    
-    sm.properties = {}
-    for key in obj.keys():
-        if key in ignored_keys:
-            continue
-        if hasattr(obj[key], 'to_dict'):
-            sm.properties[key] = obj[key].to_dict()
-        else:            
-            sm.properties[key] = obj[key]
-
-    # Set object transform
-    #sm.transform = [y for x in obj.matrix_world for y in x]
-    #setattr(sm, 'transform', [y for x in obj.matrix_world for y in x])
-
-    # This is still needed until there is a way to access the transform property in 
-    # other programs.
-    sm.properties['transform'] = str([y for x in obj.matrix_world for y in x])
-    #sm.properties['transform'] = [[y for y in x] for x in obj.matrix_world]
 
     # Add texture coordinates
     # TODO: make switchable
@@ -77,10 +53,9 @@ def MeshObject_to_SpeckleMesh(obj, scale=1.0):
     '''
 
     sm.name = obj.name   
-    sm.id = obj.speckle.object_id
-    sm.geometryHash = SetGeometryHash(str(sm))[:12]
-    sm.hash = SetGeometryHash(str(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
-    sm.type = 'Mesh'
+    #sm.id = obj.speckle.object_id
+    #sm.geometryHash = SetGeometryHash(str(sm))[:12]
+    #sm.hash = SetGeometryHash(str(sm) + strftime("%Y-%m-%d %H:%M:%S", gmtime()))[:12]
     sm.colors = []
 
     return sm	

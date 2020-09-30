@@ -6,15 +6,10 @@ def import_brep(speckle_brep, scale, name=None):
     if not name:
         name = speckle_brep.geometryHash
 
-        #name = find_key_case_insensitive(speckle_brep, "geometryHash")
         if not name:
             name = speckle_brep.id
-            #name = speckle_brep['_id']
 
-    #display_value = find_key_case_insensitive(speckle_brep, "displayValue")
-    #display_value = speckle_brep.displayValue
-
-    if hasattr(speckle_brep, "displayValue") and speckle_brep.displayValue:
+    if speckle_brep.displayValue:
 
         if name in bpy.data.meshes.keys():
             mesh = bpy.data.meshes[name]

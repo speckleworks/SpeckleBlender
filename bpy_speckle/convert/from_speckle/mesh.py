@@ -4,7 +4,8 @@ from bpy_speckle.util import find_key_case_insensitive
 
 def add_vertices(smesh, bmesh, scale=1.0):
     
-    sverts = find_key_case_insensitive(smesh, "vertices")
+    #sverts = find_key_case_insensitive(smesh, "vertices")
+    sverts = smesh.vertices
 
     if sverts:
         if len(sverts) > 0:
@@ -13,9 +14,10 @@ def add_vertices(smesh, bmesh, scale=1.0):
         
     bmesh.verts.ensure_lookup_table()  
 
-def add_faces(smesh, bmesh):
+def add_faces(smesh, bmesh, smooth=False):
     
-    sfaces = find_key_case_insensitive(smesh, "faces")
+    #sfaces = find_key_case_insensitive(smesh, "faces")
+    sfaces = smesh.faces
 
     if sfaces:
         if len(sfaces) > 0:
@@ -24,12 +26,12 @@ def add_faces(smesh, bmesh):
                 if (sfaces[i] == 0):
                     i += 1
                     f = bmesh.faces.new((bmesh.verts[int(sfaces[i])], bmesh.verts[int(sfaces[i + 1])], bmesh.verts[int(sfaces[i + 2])]))
-                    f.smooth = True
+                    f.smooth = smooth
                     i += 3
                 elif (sfaces[i] == 1):
                     i += 1
                     f = bmesh.faces.new((bmesh.verts[int(sfaces[i])], bmesh.verts[int(sfaces[i + 1])], bmesh.verts[int(sfaces[i + 2])], bmesh.verts[int(sfaces[i + 3])]))
-                    f.smooth = True
+                    f.smooth = smooth
                     i += 4
                 else:
                     print("Invalid face length.\n" + str(sfaces[i]))
@@ -41,7 +43,8 @@ def add_faces(smesh, bmesh):
 def add_colors(smesh, bmesh):
 
     colors = []
-    scolors = find_key_case_insensitive(smesh, "colors")
+    #scolors = find_key_case_insensitive(smesh, "colors")
+    scolors = smesh.colors
 
     if scolors:
         if len(scolors) > 0:
@@ -61,7 +64,8 @@ def add_colors(smesh, bmesh):
 
 def add_uv_coords(smesh, bmesh):
 
-    sprops = find_key_case_insensitive(smesh, "properties")
+    #sprops = find_key_case_insensitive(smesh, "properties")
+    sprops = smesh.properties
     if sprops:
         texKey = ""
         if 'texture_coordinates' in sprops.keys():
@@ -97,7 +101,7 @@ def add_uv_coords(smesh, bmesh):
                 raise
                 pass
 
-            del smesh['properties'][texKey]
+            del smesh.properties[texKey]
 
 
 def to_bmesh(speckle_mesh, blender_mesh, name="SpeckleMesh", scale=1.0):
@@ -118,11 +122,13 @@ def to_bmesh(speckle_mesh, blender_mesh, name="SpeckleMesh", scale=1.0):
 
 def import_mesh(speckle_mesh, scale=1.0, name=None):
     if not name:
-        name = speckle_mesh.get("geometryHash")
+        name = speckle_mesh.geometryHash
+        #name = speckle_mesh.get("geometryHash")
         if not name:
-            name = speckle_mesh['_id']
+            name = str(speckle_mesh.id)
+            #name = speckle_mesh['_id']
 
-    if name in bpy.data.meshes.keys():
+    if name in bpy.data.meshes.keys() and False:
         mesh = bpy.data.meshes[name]
     else:
         mesh = bpy.data.meshes.new(name=name)

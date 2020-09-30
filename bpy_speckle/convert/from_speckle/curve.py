@@ -1,13 +1,15 @@
 import bpy, math
 from bpy_speckle.util import find_key_case_insensitive
 from mathutils import Vector, Quaternion
+from speckle.base.resource import SCHEMAS
 
 CONVERT = {}
 
 
 def import_line(scurve, bcurve, scale):
 
-    value = find_key_case_insensitive(scurve, "value")
+    #value = find_key_case_insensitive(scurve, "value")
+    value = scurve.Value
 
     if value:
 
@@ -17,21 +19,26 @@ def import_line(scurve, bcurve, scale):
         line.points[0].co = (float(value[0]) * scale, float(value[1]) * scale, float(value[2]) * scale, 1)
         line.points[1].co = (float(value[3]) * scale, float(value[4]) * scale, float(value[5]) * scale, 1)
 
+
         return line
 
 CONVERT["Line"] = import_line
 
 def import_polyline(scurve, bcurve, scale):
 
-    value = find_key_case_insensitive(scurve, "value")
+    #value = find_key_case_insensitive(scurve, "value")
+    value = scurve.value
 
     if value:
         N = int(len(value) / 3)
 
         polyline = bcurve.splines.new('POLY')
 
-        if "closed" in scurve.keys():
-            polyline.use_cyclic_u = scurve["closed"]
+        if hasattr(scurve, "closed"):
+            polyline.use_cyclic_u = scurve.closed
+
+        #if "closed" in scurve.keys():
+        #    polyline.use_cyclic_u = scurve["closed"]
 
         polyline.points.add(N - 1)
         for i in range(0, N):
@@ -43,21 +50,23 @@ CONVERT["Polyline"] = import_polyline
 
 def import_nurbs_curve(scurve, bcurve, scale):
 
-    points = find_key_case_insensitive(scurve, "points")
+    #points = find_key_case_insensitive(scurve, "points")
+    points = scurve.points
 
     if points:
         N = int(len(points) / 3)
 
         nurbs = bcurve.splines.new('NURBS')
 
-        nurbs.use_cyclic_u = find_key_case_insensitive(scurve, "closed", False)
+        if hasattr(scurve, "closed"):
+            nurbs.use_cyclic_u = scurve.closed
 
         nurbs.points.add(N - 1)
         for i in range(0, N):
             nurbs.points[i].co = (float(points[i * 3]) * scale, float(points[i * 3+ 1]) * scale, float(points[i * 3+ 2]) * scale, 1)
 
         nurbs.use_endpoint_u = True
-        nurbs.order_u = scurve['degree'] + 1
+        nurbs.order_u = scurve.degree + 1
                 
         return nurbs   
 
@@ -68,20 +77,31 @@ def import_arc(rcurve, bcurve, scale):
     '''
     Parse arc data from Speckle object dictionary
     '''
-    plane = find_key_case_insensitive(rcurve, "plane")
+    #plane = find_key_case_insensitive(rcurve, "plane")
+    plane = rcurve.plane
     if not plane:
         return
 
-    origin = find_key_case_insensitive(plane, "origin")
-    normal = find_key_case_insensitive(plane, "normal")
-    normal = Vector(find_key_case_insensitive(normal, "value"))
+    origin = plane.origin
+    normal = Vector(plane.normal.value)
 
-    xaxis = find_key_case_insensitive(plane, "xdir")
-    yaxis = find_key_case_insensitive(plane, "ydir")
+    #origin = find_key_case_insensitive(plane, "origin")
+    #normal = find_key_case_insensitive(plane, "normal")
+    #normal = Vector(find_key_case_insensitive(normal, "value"))
 
-    radius = find_key_case_insensitive(rcurve, "radius", 0) * scale
-    startAngle = find_key_case_insensitive(rcurve, "startAngle", 0)
-    endAngle = find_key_case_insensitive(rcurve, "endAngle", 0)
+    xaxis = plane.xdir
+    yaxis = plane.ydir
+
+    radius = rcurve.radius * scale
+    startAngle = rcurve.startAngle
+    endAngle = rcurve.endAngle
+
+    #xaxis = find_key_case_insensitive(plane, "xdir")
+    #yaxis = find_key_case_insensitive(plane, "ydir")
+
+    #radius = find_key_case_insensitive(rcurve, "radius", 0) * scale
+    #startAngle = find_key_case_insensitive(rcurve, "startAngle", 0)
+    #endAngle = find_key_case_insensitive(rcurve, "endAngle", 0)
 
     startQuat = Quaternion(normal, startAngle)
     endQuat = Quaternion(normal, endAngle)
@@ -90,13 +110,13 @@ def import_arc(rcurve, bcurve, scale):
     Get start and end vectors, centre point, angles, etc.
     '''
 
-    r1 = Vector(find_key_case_insensitive(xaxis, "value"))
+    r1 = Vector(plane.xdir.value)
     r1.rotate(startQuat)
 
-    r2 = Vector(find_key_case_insensitive(xaxis, "value"))
+    r2 = Vector(plane.xdir.value)
     r2.rotate(endQuat)
 
-    c = Vector(find_key_case_insensitive(origin, "value")) * scale
+    c = Vector(plane.origin.value) * scale
 
     spt = c + r1 * radius
     ept = c + r2 * radius
@@ -153,23 +173,26 @@ def import_null(speckle_object, bcurve, scale):
 
 def import_polycurve(scurve, bcurve, scale):
 
-    segments = find_key_case_insensitive(scurve, "segments")
+    #segments = find_key_case_insensitive(scurve, "segments")
+    segments = scurve.segments
 
     for seg in segments:
         speckle_type = seg.get("type", "")
 
-        if speckle_type in CONVERT.keys():
-            CONVERT[speckle_type](seg, bcurve, scale)
+        if speckle_type in CONVERT.keys() and speckle_type in SCHEMAS.keys():
+            segcurve = SCHEMAS[speckle_type].parse_obj(seg)
+            CONVERT[speckle_type](segcurve, bcurve, scale)
         else:
             print("Unsupported curve type: {}".format(speckle_type))
 
 CONVERT['Polycurve'] = import_polycurve
 
 def import_curve(speckle_curve, scale, name=None):
+
     if not name:
-        name = speckle_curve.get('geometryHash', None)
+        name = speckle_curve.geometryHash
         if name == None:
-            name = speckle_curve.get("_id", None)
+            name = speckle_curve.id
             if name == None:
                 name = "SpeckleCurve"
 
@@ -181,10 +204,10 @@ def import_curve(speckle_curve, scale, name=None):
     curve_data.dimensions = '3D'
     curve_data.resolution_u = 12
 
-    if speckle_curve["type"] not in CONVERT.keys():
-        print("Unsupported curve type: {}".format(speckle_curve["type"]))
+    if speckle_curve.type not in CONVERT.keys():
+        print("Unsupported curve type: {}".format(speckle_curve.type))
         return None
 
-    CONVERT[speckle_curve["type"]](speckle_curve, curve_data, scale)
+    CONVERT[speckle_curve.type](speckle_curve, curve_data, scale)
 
     return curve_data
