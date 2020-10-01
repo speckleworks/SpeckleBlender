@@ -26,7 +26,7 @@ bl_info = {
     "author": "Tom Svilans",
     "version": (0, 1, 1),
     "blender": (2, 82, 0),
-    "location": "File > Import > SpeckleBlender",
+    "location": "3d viewport toolbar (N), under the Speckle tab.",
     "description": "This addon lets you use the Speckle Python client",
     "warning": "This add-on is WIP and should be used with caution",
     "wiki_url": "https://github.com/speckleworks/SpeckleBlender",
