@@ -26,6 +26,7 @@ def _report(msg):
 def get_scale_length(units):
     if units in unit_scale.keys():
         return unit_scale[units]
+    _report("Units <{}> are not supported.".format(units))
     return 1.0
 
 def tuple_to_account(tup):
@@ -159,6 +160,7 @@ def _get_streams(client, account, query=None, omit_clones=True):
         if s.baseProperties:
             stream.units = s.baseProperties.units
         else:
+            _report("stream {} doesn't have baseProperties".format(s.name))
             stream.units = default_units
 
 def _get_accounts(scene):
