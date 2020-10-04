@@ -63,7 +63,7 @@ class DownloadStreamObjects(bpy.types.Operator):
         '''
         Set conversion scale from stream units
         '''
-        scale = context.scene.unit_settings.scale_length * get_scale_length(stream.units)
+        scale = get_scale_length(stream.units.lower()) / context.scene.unit_settings.scale_length 
 
 
         '''
@@ -148,7 +148,7 @@ class UploadStreamObjects(bpy.types.Operator):
                 'Authorization': account.authToken,
             })            
 
-            scale = context.scene.unit_settings.scale_length / get_scale_length(stream.units)
+            scale = context.scene.unit_settings.scale_length / get_scale_length(stream.units.lower())
 
             placeholders = []
 

@@ -5,12 +5,12 @@ Speckle functions
 '''
 
 unit_scale = {
-    'Meters':1.0,
-    'Centimeters':0.01,
-    'Millimeters':0.001,
-    'Inches':0.0254,
-    'Feet':0.3048,
-    'Kilometers':1000.0,
+    'meters':1.0,
+    'centimeters':0.01,
+    'millimeters':0.001,
+    'inches':0.0254,
+    'feet':0.3048,
+    'kilometers':1000.0,
 }
 
 '''
@@ -24,7 +24,7 @@ def _report(msg):
     print("SpeckleBlender: {}".format(msg))
 
 def get_scale_length(units):
-    if units in unit_scale.keys():
+    if units.lower() in unit_scale.keys():
         return unit_scale[units]
     _report("Units <{}> are not supported.".format(units))
     return 1.0
