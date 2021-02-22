@@ -1,6 +1,12 @@
 # SpeckleBlender
 Speckle add-on for Blender 2.8
 
+## ⚠️ IMPORTANT ⚠️
+
+Speckle v1 has reached EOL and is no longer mainatined. Check out our brand new 👉 [Speckle v2](https://github.com/specklesystems)!
+Read more about the announcemnt [here](https://speckle.systems/blog/speckle2-vision-and-faq) and check out or new [website](https://speckle.systems).
+
+## Notice
 
 Important update: `SpeckleBlender` now checks for the `speckle` dependency and installs it if necessary, using `pip`. If `pip` is not found, it tries installing that too. 
 
